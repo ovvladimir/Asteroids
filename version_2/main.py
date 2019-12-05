@@ -19,13 +19,12 @@ bullet_dead = [0]
 asteroid_list = []
 COLLISION_RESOLUTION = 10
 
+main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
 player_image = pyglet.resource.image("ship2.png")
 bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
-star_field_image = pyglet.resource.image('starfield.jpg')
-
 asteroid_image = pyglet.resource.image("asteroid.png")
-main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
+star_field_image = pyglet.resource.image('starfield.jpg')
 level_label = pyglet.text.Label(text="Asteroids", font_name='Times New Roman', bold=True,
                                 font_size=28, x=game_window.width // 2, y=game_window.height - 32,
                                 anchor_x='center', batch=main_batch)
@@ -146,7 +145,7 @@ class Player(Object):
 
         self.fire_timeout -= dt
         if self.opacity >= 255:
-            if keys['Fire'] and self.fire_timeout <= 0 and game_run[0] is True and paused[0] is False:
+            if keys['Fire'] and self.fire_timeout <= 0:
                 self.fire_timeout = 1.5  # промежуток между пулями
                 self.fire()
             elif keys['Left']:
@@ -272,30 +271,31 @@ def check_collisions():
 
 
 def update(dt):
-    for i in range(len(game_objects)):
-        for j in range(i + 1, len(game_objects)):
-            obj_1 = game_objects[i]
-            obj_2 = game_objects[j]
-            if not obj_1.dead and not obj_2.dead:
-                if obj_1.collides_with(obj_2):
-                    obj_1.handle_collision_with(obj_2)
-                    obj_2.handle_collision_with(obj_1)
+    if paused[0] is False and game_run[0] is True:
+        for i in range(len(game_objects)):
+            for j in range(i + 1, len(game_objects)):
+                obj_1 = game_objects[i]
+                obj_2 = game_objects[j]
+                if not obj_1.dead and not obj_2.dead:
+                    if obj_1.collides_with(obj_2):
+                        obj_1.handle_collision_with(obj_2)
+                        obj_2.handle_collision_with(obj_1)
 
-    for obj in game_objects:
-        obj.update(dt)
+        for obj in game_objects:
+            obj.update(dt)
 
-    for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
-        t.delete()
-        game_objects.remove(t)
+        for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
+            t.delete()
+            game_objects.remove(t)
 
-        del asteroid_list[:]
-        asteroid_list.extend(game_objects)
-        asteroid_list.pop(0)
+            del asteroid_list[:]
+            asteroid_list.extend(game_objects)
+            asteroid_list.pop(0)
 
-        if len(asteroid_list) <= 0 or num_icons[0] <= 0:
-            game_run[0] = False
+            if len(asteroid_list) <= 0 or num_icons[0] <= 0:
+                game_run[0] = False
 
-    check_collisions()
+        check_collisions()
 
 
 @game_window.event

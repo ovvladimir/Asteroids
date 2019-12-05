@@ -272,6 +272,9 @@ def check_collisions():
 
 def update(dt):
     if paused[0] is False and game_run[0] is True:
+        for obj in game_objects:
+            obj.update(dt)
+
         for i in range(len(game_objects)):
             for j in range(i + 1, len(game_objects)):
                 obj_1 = game_objects[i]
@@ -280,9 +283,6 @@ def update(dt):
                     if obj_1.collides_with(obj_2):
                         obj_1.handle_collision_with(obj_2)
                         obj_2.handle_collision_with(obj_1)
-
-        for obj in game_objects:
-            obj.update(dt)
 
         for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
             t.delete()

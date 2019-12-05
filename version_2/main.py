@@ -271,31 +271,29 @@ def check_collisions():
 
 
 def update(dt):
-    if paused[0] is False and game_run[0] is True:
-        for obj in game_objects:
-            obj.update(dt)
+    [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
-        for i in range(len(game_objects)):
-            for j in range(i + 1, len(game_objects)):
-                obj_1 = game_objects[i]
-                obj_2 = game_objects[j]
-                if not obj_1.dead and not obj_2.dead:
-                    if obj_1.collides_with(obj_2):
-                        obj_1.handle_collision_with(obj_2)
-                        obj_2.handle_collision_with(obj_1)
+    for i in range(len(game_objects)):
+        for j in range(i + 1, len(game_objects)):
+            obj_1 = game_objects[i]
+            obj_2 = game_objects[j]
+            if not obj_1.dead and not obj_2.dead:
+                if obj_1.collides_with(obj_2):
+                    obj_1.handle_collision_with(obj_2)
+                    obj_2.handle_collision_with(obj_1)
 
-        for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
-            t.delete()
-            game_objects.remove(t)
+    for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
+        t.delete()
+        game_objects.remove(t)
 
-            del asteroid_list[:]
-            asteroid_list.extend(game_objects)
-            asteroid_list.pop(0)
+        del asteroid_list[:]
+        asteroid_list.extend(game_objects)
+        asteroid_list.pop(0)
 
-            if len(asteroid_list) <= 0 or num_icons[0] <= 0:
-                game_run[0] = False
+        if len(asteroid_list) <= 0 or num_icons[0] <= 0:
+            game_run[0] = False
 
-        check_collisions()
+    check_collisions()
 
 
 @game_window.event

@@ -3,10 +3,15 @@ import random
 import math
 from pyglet.window import key
 
-game_window = pyglet.window.Window(960, 720)
+game_window = pyglet.window.Window(960, 720, caption='Asteroids')
+game_window.set_location(5, 30)
+game_window.set_mouse_visible(visible=False)
 
 pyglet.resource.path = ['../res']
 pyglet.resource.reindex()
+
+icon = pyglet.resource.image('ship.png')
+game_window.set_icon(icon)
 
 backgraund_x1 = 0
 backgraund_x2 = -game_window.width

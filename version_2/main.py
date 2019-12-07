@@ -33,9 +33,9 @@ star_field_image = pyglet.resource.image('starfield.jpg')
 level_label = pyglet.text.Label(text="Asteroids", font_name='Times New Roman', bold=True,
                                 font_size=28, x=game_window.width // 2, y=game_window.height - 32,
                                 anchor_x='center', batch=main_batch)
-score_label = pyglet.text.Label(text=f"Очки: {score[0]}", font_name='Times New Roman',
+score_label = pyglet.text.Label(text=f"Points: {score[0]}", font_name='Times New Roman',
                                 font_size=16, x=10, y=game_window.height - 25, batch=main_batch)
-asteroid_label = pyglet.text.Label(text=f"Астероиды: {len(asteroid_list)}", font_name='Times New Roman',
+asteroid_label = pyglet.text.Label(text=f"Asteroids: {len(asteroid_list)}", font_name='Times New Roman',
                                    font_size=16, x=10, y=game_window.height - 55, batch=main_batch)
 game_over_label = pyglet.text.Label('',
                                     font_name='Arial', font_size=36, color=(50, 50, 255, 255),
@@ -44,6 +44,7 @@ game_over_label = pyglet.text.Label('',
 laser = pyglet.resource.media('laser.wav', streaming=False)
 sound = pyglet.resource.media('explosion.wav', streaming=False)
 """player_ship = pyglet.sprite.Sprite(x=game_window.width/2, y=game_window.height/2, batch=main_batch)"""
+counter = pyglet.window.FPSDisplay(window=game_window)
 
 
 class Object(pyglet.sprite.Sprite):
@@ -349,16 +350,17 @@ def on_draw():
         backgraund_x2 = -game_window.width
     star_field_image.blit(backgraund_x1, 0, width=game_window.width, height=game_window.height)
     star_field_image.blit(backgraund_x2, 0, width=game_window.width, height=game_window.height)
-    asteroid_label.text = f"Астероиды: {len(asteroid_list)}"
-    score_label.text = f"Очки: {score[0]}"
+    asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
+    score_label.text = f"Points: {score[0]}"
     for i in range(num_icons[0]):
         player_image.blit(x=game_window.width - i * 30, y=game_window.height,
                           width=player_image.width // 3, height=player_image.height // 3)
     if game_run[0] is True:
         if paused[0] is False:
             main_batch.draw()
+            counter.draw()
         else:
-            game_over_label.text = "ПАУЗА"
+            game_over_label.text = "PAUSE"
             game_over_label.draw()
             asteroid_label.draw()
             score_label.draw()
@@ -390,3 +392,15 @@ if __name__ == '__main__':
 
     pyglet.clock.schedule_interval(update, 1 / 120.0)
     pyglet.app.run()
+
+'''
+def collision_cells(self):
+    COLLISION_RESOLUTION = 0.75
+    radiusx = int(self.image.width * 0.5 * self.scale * COLLISION_RESOLUTION)
+    radiusy = int(self.image.height * 0.5 * self.scale * COLLISION_RESOLUTION)
+    cellx = int(self.x)
+    celly = int(self.y)
+    for y in range(celly - radiusy, celly + radiusy):
+        for x in range(cellx - radiusx, cellx + radiusx):
+            yield x, y
+'''

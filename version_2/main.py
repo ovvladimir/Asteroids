@@ -1,3 +1,4 @@
+# https://pyglet.readthedocs.io/en/stable/
 import pyglet
 import random
 import math
@@ -15,14 +16,13 @@ game_window.set_icon(icon)
 
 backgraund_x1 = 0
 backgraund_x2 = -game_window.width
-score = [0]
-game_run = [True]
 keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
+game_run = [True]
 paused = [False, True]
+score = [0]
 num_icons = [6]
-bullet_dead = [0]
 asteroid_list = []
-COLLISION_RESOLUTION = 10
+bullet_list = []
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
 player_image = pyglet.resource.image("ship2.png")
@@ -50,14 +50,8 @@ counter = pyglet.window.FPSDisplay(window=game_window)
 class Object(pyglet.sprite.Sprite):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.velocity_x, self.velocity_y = 0.0, 0.0
-        self.x = self.x
-        self.y = self.y
-
         self.dead = False
-
-        self.collision_radius = self.image.width // COLLISION_RESOLUTION // 2
 
     def update(self, dt):
         self.x += self.velocity_x * dt
@@ -67,22 +61,16 @@ class Object(pyglet.sprite.Sprite):
     def check_bounds(self):
         min_x = -self.image.width / 2.
         min_y = -self.image.height / 2.
-        max_x = game_window.width + self.image.width / 2.
-        max_y = game_window.height + self.image.height / 2.
+        max_x = game_window.width - min_x
+        max_y = game_window.height - min_y
         if self.x < min_x:
             self.x = max_x
-            bullet_dead[0] = 1
         elif self.x > max_x:
             self.x = min_x
-            bullet_dead[0] = 1
         elif self.y < min_y:
             self.y = max_y
-            bullet_dead[0] = 1
         elif self.y > max_y:
             self.y = min_y
-            bullet_dead[0] = 1
-        else:
-            bullet_dead[0] = 0
 
     def collides_with(self, other_object):
         collision_distance = self.image.width / 2. * self.scale \
@@ -93,17 +81,9 @@ class Object(pyglet.sprite.Sprite):
     def handle_collision_with(self, other_object):
         if other_object.__class__ is not self.__class__:
             self.dead = True
-            if other_object in asteroid_list:
+            if self in asteroid_list:
                 score[0] += 1
                 sound.play()
-
-    def collision_cells(self):
-        radius = self.collision_radius
-        cellx = int(self.x / COLLISION_RESOLUTION)
-        celly = int(self.y / COLLISION_RESOLUTION)
-        for y in range(celly - radius, celly + radius):
-            for x in range(cellx - radius, cellx + radius):
-                yield x, y
 
 
 class Player(Object):
@@ -121,7 +101,6 @@ class Player(Object):
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
 
-        self.fire_timeout = 0
         self.opacity = 0  # прозрачность
 
     def update(self, dt):
@@ -149,10 +128,8 @@ class Player(Object):
         self.engine_sprite.x = self.x
         self.engine_sprite.y = self.y
 
-        self.fire_timeout -= dt
         if self.opacity >= 255:
-            if keys['Fire'] and self.fire_timeout <= 0:
-                self.fire_timeout = 1.5  # промежуток между пулями
+            if keys['Fire'] and len(bullet_list) == 0:
                 self.fire()
             elif keys['Left']:
                 self.rotation -= self.rotate_speed * dt
@@ -192,6 +169,7 @@ class Player(Object):
         new_bullet.velocity_x = bullet_vx
         new_bullet.velocity_y = bullet_vy
         game_objects.append(new_bullet)
+        bullet_list.append(new_bullet)
         laser.play()
 
 
@@ -200,13 +178,17 @@ class Bullet(Object):
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
 
-    def die(self):
-        self.dead = True
-
     def update(self, dt):
         super(Bullet, self).update(dt)
-        if bullet_dead[0] == 1:
-            self.die()
+
+        if self.x < 0:
+            self.dead = True
+        elif self.x > game_window.width:
+            self.dead = True
+        elif self.y < 0:
+            self.dead = True
+        elif self.y > game_window.height:
+            self.dead = True
 
 
 class Asteroid(Object):
@@ -229,6 +211,7 @@ class Asteroid(Object):
                                            + self.velocity_y) * random.choice([1, 3])
                 new_asteroid.scale = self.scale * 0.5
                 game_objects.append(new_asteroid)
+                asteroid_list.append(new_asteroid)
 
     def update(self, dt):
         super(Asteroid, self).update(dt)
@@ -262,20 +245,6 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
     return math.sqrt((point_1[0] - point_2[0]) ** 2 + (point_1[1] - point_2[1]) ** 2)
 
 
-def check_collisions():
-    hit_box = {}
-    for x, y in player_ship.collision_cells():
-        hit_box[x, y] = player_ship
-
-    for ast in asteroid_list:
-        for x, y in ast.collision_cells():
-            if (x, y) in hit_box:
-                del hit_box[x, y]
-                ast.dead = True
-                sound.play()
-                player_ship.opacity = 0
-
-
 def update(dt):
     [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
@@ -284,22 +253,28 @@ def update(dt):
             obj_1 = game_objects[i]
             obj_2 = game_objects[j]
             if not obj_1.dead and not obj_2.dead:
-                if obj_1.collides_with(obj_2):
-                    obj_1.handle_collision_with(obj_2)
-                    obj_2.handle_collision_with(obj_1)
+                if not (obj_1 is player_ship and obj_2 in bullet_list):
+                    if obj_1.collides_with(obj_2):
+                        if obj_1 is player_ship and obj_2 in asteroid_list:
+                            obj_1.opacity = 0
+                            obj_2.dead = True
+                            sound.play()
+                        else:
+                            obj_1.handle_collision_with(obj_2)
+                            obj_2.handle_collision_with(obj_1)
 
-    for t in [obj for obj in game_objects if obj.dead and obj is not player_ship]:
-        t.delete()
-        game_objects.remove(t)
+    for obj in game_objects:
+        if obj.dead:
+            if obj is not player_ship:
+                obj.delete()
+                game_objects.remove(obj)
+                if obj in bullet_list:
+                    bullet_list.remove(obj)
+                if obj in asteroid_list:
+                    asteroid_list.remove(obj)
 
-        del asteroid_list[:]
-        asteroid_list.extend(game_objects)
-        asteroid_list.pop(0)
-
-        if len(asteroid_list) <= 0 or num_icons[0] <= 0:
-            game_run[0] = False
-
-    check_collisions()
+    if len(asteroid_list) <= 0 or num_icons[0] <= 0:
+        game_run[0] = False
 
 
 @game_window.event
@@ -378,11 +353,8 @@ def on_draw():
 
 if __name__ == '__main__':
     player_ship = Player(x=game_window.width // 2, y=game_window.height // 2, batch=main_batch)
-    bullet = Bullet(x=player_ship.position[0], y=player_ship.position[1], batch=main_batch)
-    bullet.opacity = 0
-    asteroids_initial = asteroid(3, player_ship.position, main_batch)  # 3 - кол-во астероидов
-    game_objects = [player_ship] + asteroids_initial + [bullet]
-    asteroid_list = asteroids_initial
+    asteroid_list = asteroid(3, player_ship.position, main_batch)  # 3 - кол-во астероидов
+    game_objects = [player_ship] + asteroid_list
 
     engine_image.anchor_x = engine_image.width * 1.5
     engine_image.anchor_y = engine_image.height * 0.5
@@ -392,15 +364,3 @@ if __name__ == '__main__':
 
     pyglet.clock.schedule_interval(update, 1 / 120.0)
     pyglet.app.run()
-
-'''
-def collision_cells(self):
-    COLLISION_RESOLUTION = 0.75
-    radiusx = int(self.image.width * 0.5 * self.scale * COLLISION_RESOLUTION)
-    radiusy = int(self.image.height * 0.5 * self.scale * COLLISION_RESOLUTION)
-    cellx = int(self.x)
-    celly = int(self.y)
-    for y in range(celly - radiusy, celly + radiusy):
-        for x in range(cellx - radiusx, cellx + radiusx):
-            yield x, y
-'''

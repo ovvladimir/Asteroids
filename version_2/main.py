@@ -131,16 +131,16 @@ class Player(Object):
         if self.opacity >= 255:
             if keys['Fire'] and len(bullet_list) == 0:
                 self.fire()
-            elif keys['Left']:
+            if keys['Left']:
                 self.rotation -= self.rotate_speed * dt
-            elif keys['Right']:
+            if keys['Right']:
                 self.rotation += self.rotate_speed * dt
+            if keys['Up']:
+                self.ship_thrust = 20
+                self.engine_sprite.visible = True
             elif keys['Down']:
                 self.ship_thrust = -20
                 self.engine_sprite.visible = True
-            elif keys['Up']:
-                self.engine_sprite.visible = True
-                self.ship_thrust = 20
             else:
                 self.ship_thrust = 0
                 self.engine_sprite.visible = False
@@ -286,13 +286,13 @@ def on_key_press(symbol, modifiers):
 
     if symbol == key.UP:
         keys['Up'] = True
-    elif symbol == key.DOWN:
+    if symbol == key.DOWN:
         keys['Down'] = True
-    elif symbol == key.LEFT:
+    if symbol == key.LEFT:
         keys['Left'] = True
-    elif symbol == key.RIGHT:
+    if symbol == key.RIGHT:
         keys['Right'] = True
-    elif symbol == key.SPACE:
+    if symbol == key.SPACE:
         keys['Fire'] = True
 
 
@@ -300,16 +300,14 @@ def on_key_press(symbol, modifiers):
 def on_key_release(symbol, modifiers):
     if symbol == key.UP:
         keys['Up'] = False
-    elif symbol == key.DOWN:
+    if symbol == key.DOWN:
         keys['Down'] = False
-    elif symbol == key.LEFT:
+    if symbol == key.LEFT:
         keys['Left'] = False
-    elif symbol == key.RIGHT:
+    if symbol == key.RIGHT:
         keys['Right'] = False
-    elif symbol == key.SPACE:
+    if symbol == key.SPACE:
         keys['Fire'] = False
-    elif modifiers & key.MOD_CTRL:
-        pass
 
 
 @game_window.event

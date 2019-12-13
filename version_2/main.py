@@ -14,8 +14,8 @@ pyglet.resource.reindex()
 icon = pyglet.resource.image('ship.png')
 game_window.set_icon(icon)
 
-backgraund_x1 = 0
-backgraund_x2 = -game_window.width
+backgraund_x1 = [0]
+backgraund_x2 = [-game_window.width]
 keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
 game_run = [True]
 paused = [False, True]
@@ -248,6 +248,14 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
 def update(dt):
     [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
+    # смещение фона
+    backgraund_x1[0] += 0.1
+    backgraund_x2[0] += 0.1
+    if backgraund_x1[0] >= game_window.width:
+        backgraund_x1[0] = 0
+    if backgraund_x2[0] >= 0:
+        backgraund_x2[0] = -game_window.width
+
     for i in range(len(game_objects)):
         for j in range(i + 1, len(game_objects)):
             obj_1 = game_objects[i]
@@ -312,17 +320,10 @@ def on_key_release(symbol, modifiers):
 
 @game_window.event
 def on_draw():
-    global backgraund_x1, backgraund_x2
     game_window.clear()
-    # смещение фона
-    backgraund_x1 += 0.1
-    backgraund_x2 += 0.1
-    if backgraund_x1 >= game_window.width:
-        backgraund_x1 = 0
-    if backgraund_x2 >= 0:
-        backgraund_x2 = -game_window.width
-    star_field_image.blit(backgraund_x1, 0, width=game_window.width, height=game_window.height)
-    star_field_image.blit(backgraund_x2, 0, width=game_window.width, height=game_window.height)
+
+    star_field_image.blit(backgraund_x1[0], 0, width=game_window.width, height=game_window.height)
+    star_field_image.blit(backgraund_x2[0], 0, width=game_window.width, height=game_window.height)
     asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
     score_label.text = f"Points: {score[0]}"
     for i in range(num_icons[0]):

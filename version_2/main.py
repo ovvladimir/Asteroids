@@ -256,10 +256,8 @@ def update(dt):
     if backgraund_x2[0] >= 0:
         backgraund_x2[0] = -game_window.width
 
-    for i in range(len(game_objects)):
-        for j in range(i + 1, len(game_objects)):
-            obj_1 = game_objects[i]
-            obj_2 = game_objects[j]
+    for index, obj_1 in enumerate(game_objects):
+        for obj_2 in game_objects[index + 1:]:
             if not obj_1.dead and not obj_2.dead:
                 if not (obj_1 is player_ship and obj_2 in bullet_list):
                     if obj_1.collides_with(obj_2):

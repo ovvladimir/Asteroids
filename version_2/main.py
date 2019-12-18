@@ -338,7 +338,7 @@ def on_draw():
     else:
         if score[0] > 38:
             game_over_label.text = "YOU ROCK!"
-        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1:
+        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1 and len(player_icons) > 0:
             game_over_label.text = "VICTORY!"
         elif len(player_icons) <= 0 or len(asteroid_list) <= 0:
             game_over_label.text = "GAME OVER"

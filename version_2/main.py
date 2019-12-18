@@ -7,6 +7,7 @@ from pyglet.window import key
 game_window = pyglet.window.Window(960, 720, caption='Asteroids')
 game_window.set_location(5, 30)
 game_window.set_mouse_visible(visible=False)
+counter = pyglet.window.FPSDisplay(window=game_window)
 
 pyglet.resource.path = ['../res']
 pyglet.resource.reindex()
@@ -20,9 +21,9 @@ keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
 game_run = [True]
 paused = [False, True]
 score = [0]
-num_icons = [6]
 asteroid_list = []
 bullet_list = []
+player_icons = []
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
 player_image = pyglet.resource.image("ship2.png")
@@ -43,8 +44,11 @@ game_over_label = pyglet.text.Label('',
                                     anchor_x='center', anchor_y='center')
 laser = pyglet.resource.media('laser.wav', streaming=False)
 sound = pyglet.resource.media('explosion.wav', streaming=False)
-"""player_ship = pyglet.sprite.Sprite(x=game_window.width/2, y=game_window.height/2, batch=main_batch)"""
-counter = pyglet.window.FPSDisplay(window=game_window)
+
+for i in range(5):
+    player_icons.append(pyglet.sprite.Sprite(
+        player_image, x=game_window.width - (i + 1) * 30, y=game_window.height - 40, batch=main_batch))
+    player_icons[i].scale = 0.33
 
 
 class Object(pyglet.sprite.Sprite):
@@ -83,6 +87,7 @@ class Object(pyglet.sprite.Sprite):
             self.dead = True
             if self in asteroid_list:
                 score[0] += 1
+                score_label.text = f"Points: {score[0]}"
                 sound.play()
 
 
@@ -101,7 +106,7 @@ class Player(Object):
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
 
-        self.opacity = 0  # прозрачность
+        self.opacity = 1  # прозрачность
 
     def update(self, dt):
         super(Player, self).update(dt)
@@ -150,8 +155,6 @@ class Player(Object):
             self.rotation = 0
             self.position = game_window.width / 2., game_window.height / 2.
 
-        if self.opacity == 0:
-            num_icons[0] -= 1
         self.opacity += 2
         if self.opacity >= 255:
             self.opacity = 255
@@ -264,6 +267,8 @@ def update(dt):
                         if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
                             obj_1.opacity = 0
                             obj_2.dead = True
+                            player_icons[-1].delete()
+                            player_icons.pop()
                             sound.play()
                         else:
                             obj_1.handle_collision_with(obj_2)
@@ -279,7 +284,8 @@ def update(dt):
                 if isinstance(obj, Asteroid):
                     asteroid_list.remove(obj)
 
-    if len(asteroid_list) <= 0 or num_icons[0] <= 0:
+    asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
+    if len(asteroid_list) <= 0 or len(player_icons) <= 0:
         game_run[0] = False
 
 
@@ -322,30 +328,26 @@ def on_draw():
 
     star_field_image.blit(backgraund_x1[0], 0, width=game_window.width, height=game_window.height)
     star_field_image.blit(backgraund_x2[0], 0, width=game_window.width, height=game_window.height)
-    asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
-    score_label.text = f"Points: {score[0]}"
-    for i in range(num_icons[0]):
-        player_image.blit(x=game_window.width - i * 30, y=game_window.height,
-                          width=player_image.width // 3, height=player_image.height // 3)
+
     if game_run[0] is True:
-        if paused[0] is False:
-            main_batch.draw()
-            counter.draw()
-        else:
+        main_batch.draw()
+        counter.draw()
+        if paused[0] is True:
             game_over_label.text = "PAUSE"
             game_over_label.draw()
-            asteroid_label.draw()
-            score_label.draw()
-            level_label.draw()
     else:
         if score[0] > 38:
             game_over_label.text = "YOU ROCK!"
-        else:
+        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1:
+            game_over_label.text = "VICTORY!"
+        elif len(player_icons) <= 0 or len(asteroid_list) <= 0:
             game_over_label.text = "GAME OVER"
         game_over_label.draw()
         asteroid_label.draw()
         score_label.draw()
         level_label.draw()
+        for i in player_icons:
+            i.draw()
 
 
 if __name__ == '__main__':

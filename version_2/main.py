@@ -361,5 +361,5 @@ if __name__ == '__main__':
     center_image(asteroid_image)
     center_image(bullet_image)
 
-    pyglet.clock.schedule_interval(update, 1 / 120.0)
+    pyglet.clock.schedule_interval(update, 1 / 60.0)
     pyglet.app.run()

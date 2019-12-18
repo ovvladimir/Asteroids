@@ -259,9 +259,9 @@ def update(dt):
     for index, obj_1 in enumerate(game_objects):
         for obj_2 in game_objects[index + 1:]:
             if not obj_1.dead and not obj_2.dead:
-                if not (obj_1 is player_ship and obj_2 in bullet_list):
+                if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
                     if obj_1.collides_with(obj_2):
-                        if obj_1 is player_ship and obj_2 in asteroid_list:
+                        if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
                             obj_1.opacity = 0
                             obj_2.dead = True
                             sound.play()
@@ -276,7 +276,7 @@ def update(dt):
                 game_objects.remove(obj)
                 if obj in bullet_list:
                     bullet_list.remove(obj)
-                if obj in asteroid_list:
+                if isinstance(obj, Asteroid):
                     asteroid_list.remove(obj)
 
     if len(asteroid_list) <= 0 or num_icons[0] <= 0:

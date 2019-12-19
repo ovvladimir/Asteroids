@@ -25,6 +25,8 @@ asteroid_list = []
 bullet_list = []
 player_icons = []
 game_objects = []
+INITIAL_NUMBER_OF_ASTEROIDS = 3
+NUMBER_OF_LIVES = 5
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
 player_image = pyglet.resource.image("ship2.png")
@@ -370,12 +372,12 @@ def init():
     bullet_list.clear()
     player_icons.clear()
     game_objects.clear()
-    for i in range(5):
+    for i in range(NUMBER_OF_LIVES):
         player_icons.append(pyglet.sprite.Sprite(
             player_image, x=game_window.width - player_image.width // 4 - i * 30,
             y=game_window.height - player_image.height // 4, batch=main_batch))
         player_icons[i].scale = 0.33
-    asteroid_list.extend(asteroid(3, player_ship.position, main_batch))  # 3 - начальное кол-во астероидов
+    asteroid_list.extend(asteroid(INITIAL_NUMBER_OF_ASTEROIDS, player_ship.position, main_batch))
     game_objects.extend([player_ship] + asteroid_list)
     player_ship.opacity = 0
     player_ship.ship_speed = 0

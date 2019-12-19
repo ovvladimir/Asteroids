@@ -9,46 +9,55 @@ game_window.set_location(5, 30)
 game_window.set_mouse_visible(visible=False)
 counter = pyglet.window.FPSDisplay(window=game_window)
 
-pyglet.resource.path = ['../res']
+pyglet.resource.path = ["../res"]
 pyglet.resource.reindex()
 
-icon = pyglet.resource.image('ship.png')
+icon = pyglet.resource.image("ship.png")
 game_window.set_icon(icon)
 
 backgraund_x1 = [0]
 backgraund_x2 = [-game_window.width]
 keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
-game_run = [True]
 paused = [False, True]
+game_run = [True]
 score = [0]
 asteroid_list = []
 bullet_list = []
 player_icons = []
+game_objects = []
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
 player_image = pyglet.resource.image("ship2.png")
 bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
 asteroid_image = pyglet.resource.image("asteroid.png")
-star_field_image = pyglet.resource.image('starfield.jpg')
-level_label = pyglet.text.Label(text="Asteroids", font_name='Times New Roman', bold=True,
-                                font_size=28, x=game_window.width // 2, y=game_window.height - 32,
-                                anchor_x='center', batch=main_batch)
-score_label = pyglet.text.Label(text=f"Points: {score[0]}", font_name='Times New Roman',
-                                font_size=16, x=10, y=game_window.height - 25, batch=main_batch)
-asteroid_label = pyglet.text.Label(text=f"Asteroids: {len(asteroid_list)}", font_name='Times New Roman',
-                                   font_size=16, x=10, y=game_window.height - 55, batch=main_batch)
-game_over_label = pyglet.text.Label('',
-                                    font_name='Arial', font_size=36, color=(50, 50, 255, 255),
-                                    x=game_window.width // 2, y=game_window.height // 2,
-                                    anchor_x='center', anchor_y='center')
+star_field_image = pyglet.resource.image("starfield.jpg")
+level_label = pyglet.text.Label(
+    text='Asteroids', font_name='Arial', bold=True, color=(250, 250, 250, 150),
+    font_size=26, x=game_window.width // 2, y=game_window.height,
+    anchor_x='center', anchor_y='top', batch=main_batch)
+score_label = pyglet.text.Label(
+    text='Points: 0', font_name='Arial', font_size=16,
+    x=5, y=game_window.height - 5, anchor_x='left', anchor_y='top', batch=main_batch)
+asteroid_label = pyglet.text.Label(
+    text='Asteroids: 3', font_name='Arial', font_size=16,
+    x=5, y=score_label.y - score_label.font_size * 1.5,
+    anchor_x='left', anchor_y='top', batch=main_batch)
+game_over_label = pyglet.text.Label(
+    '', font_name='Arial', font_size=36, color=(50, 50, 255, 255),
+    x=game_window.width // 2, y=game_window.height // 2,
+    anchor_x='center', anchor_y='center')
+new_game_label = pyglet.text.Label(
+    '', font_name='Arial', font_size=26, color=(250, 250, 250, 150),
+    x=game_window.width // 2, y=game_over_label.y - game_over_label.font_size * 2,
+    anchor_x='center', anchor_y='center')
 laser = pyglet.resource.media('laser.wav', streaming=False)
 sound = pyglet.resource.media('explosion.wav', streaming=False)
 
-for i in range(5):
-    player_icons.append(pyglet.sprite.Sprite(
-        player_image, x=game_window.width - (i + 1) * 30, y=game_window.height - 40, batch=main_batch))
-    player_icons[i].scale = 0.33
+player_image.anchor_x, player_image.anchor_y = player_image.width / 2., player_image.height / 2.
+asteroid_image.anchor_x, asteroid_image.anchor_y = asteroid_image.width / 2., asteroid_image.height / 2.
+bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width / 2., bullet_image.height / 2.
+engine_image.anchor_x, engine_image.anchor_y = engine_image.width * 1.5, engine_image.height * 0.5
 
 
 class Object(pyglet.sprite.Sprite):
@@ -106,7 +115,7 @@ class Player(Object):
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
 
-        self.opacity = 1  # прозрачность
+        self.opacity = 0  # прозрачность
 
     def update(self, dt):
         super(Player, self).update(dt)
@@ -155,9 +164,9 @@ class Player(Object):
             self.rotation = 0
             self.position = game_window.width / 2., game_window.height / 2.
 
-        self.opacity += 2
-        if self.opacity >= 255:
-            self.opacity = 255
+            self.opacity += 2
+            if self.opacity >= 255:
+                self.opacity = 255
 
     def fire(self):
         angle_radians = -math.radians(self.rotation)
@@ -219,12 +228,6 @@ class Asteroid(Object):
     def update(self, dt):
         super(Asteroid, self).update(dt)
         self.rotation += self.rotate_speed * dt
-
-
-def center_image(image):
-    """Точка привязки изображения по центру"""
-    image.anchor_x = image.width / 2.
-    image.anchor_y = image.height / 2.
 
 
 def asteroid(num_asteroids, player_position, batch=None):
@@ -290,9 +293,41 @@ def update(dt):
 
 
 @game_window.event
+def on_draw():
+    game_window.clear()
+
+    star_field_image.blit(backgraund_x1[0], 0, width=game_window.width, height=game_window.height)
+    star_field_image.blit(backgraund_x2[0], 0, width=game_window.width, height=game_window.height)
+
+    if game_run[0] is True:
+        main_batch.draw()
+        counter.draw()
+        if paused[0] is True:
+            game_over_label.text = "PAUSE"
+            game_over_label.draw()
+    else:
+        if score[0] > 38:
+            game_over_label.text = "YOU ROCK!"
+        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1 and len(player_icons) > 0:
+            game_over_label.text = "VICTORY!"
+        elif len(player_icons) <= 0 or len(asteroid_list) <= 0:
+            game_over_label.text = "GAME OVER"
+        new_game_label.text = 'press Enter for a new game'
+        new_game_label.draw()
+        game_over_label.draw()
+        asteroid_label.draw()
+        score_label.draw()
+        level_label.draw()
+        for i in player_icons:
+            i.draw()
+
+
+@game_window.event
 def on_key_press(symbol, modifiers):
     if symbol == key.P:
         paused.reverse()
+    elif symbol == key.ENTER and game_run[0] is False:
+        init()
     elif modifiers & key.MOD_CTRL:
         pass
 
@@ -322,44 +357,36 @@ def on_key_release(symbol, modifiers):
         keys['Fire'] = False
 
 
-@game_window.event
-def on_draw():
-    game_window.clear()
-
-    star_field_image.blit(backgraund_x1[0], 0, width=game_window.width, height=game_window.height)
-    star_field_image.blit(backgraund_x2[0], 0, width=game_window.width, height=game_window.height)
-
-    if game_run[0] is True:
-        main_batch.draw()
-        counter.draw()
-        if paused[0] is True:
-            game_over_label.text = "PAUSE"
-            game_over_label.draw()
-    else:
-        if score[0] > 38:
-            game_over_label.text = "YOU ROCK!"
-        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1 and len(player_icons) > 0:
-            game_over_label.text = "VICTORY!"
-        elif len(player_icons) <= 0 or len(asteroid_list) <= 0:
-            game_over_label.text = "GAME OVER"
-        game_over_label.draw()
-        asteroid_label.draw()
-        score_label.draw()
-        level_label.draw()
-        for i in player_icons:
-            i.draw()
+def init():
+    score[0] = 0
+    score_label.text = f"Points: {score[0]}"
+    for al in asteroid_list:
+        al.delete()
+    for pi in player_icons:
+        pi.delete()
+    for bl in bullet_list:
+        bl.delete()
+    asteroid_list.clear()
+    bullet_list.clear()
+    player_icons.clear()
+    game_objects.clear()
+    for i in range(5):
+        player_icons.append(pyglet.sprite.Sprite(
+            player_image, x=game_window.width - player_image.width // 4 - i * 30,
+            y=game_window.height - player_image.height // 4, batch=main_batch))
+        player_icons[i].scale = 0.33
+    asteroid_list.extend(asteroid(3, player_ship.position, main_batch))  # 3 - начальное кол-во астероидов
+    game_objects.extend([player_ship] + asteroid_list)
+    player_ship.opacity = 0
+    player_ship.ship_speed = 0
+    player_ship.rotation = 0
+    player_ship.position = game_window.width / 2., game_window.height / 2.
+    game_run[0] = True
 
 
 if __name__ == '__main__':
     player_ship = Player(x=game_window.width // 2, y=game_window.height // 2, batch=main_batch)
-    asteroid_list = asteroid(3, player_ship.position, main_batch)  # 3 - кол-во астероидов
-    game_objects = [player_ship] + asteroid_list
-
-    engine_image.anchor_x = engine_image.width * 1.5
-    engine_image.anchor_y = engine_image.height * 0.5
-    center_image(player_image)
-    center_image(asteroid_image)
-    center_image(bullet_image)
+    init()
 
     pyglet.clock.schedule_interval(update, 1 / 60.0)
     pyglet.app.run()

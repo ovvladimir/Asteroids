@@ -144,7 +144,7 @@ class Player(Object):
         self.engine_sprite.x = self.x
         self.engine_sprite.y = self.y
 
-        if self.opacity >= 255:
+        if self.opacity == 255:
             if keys['Fire'] and len(bullet_list) == 0:
                 self.fire()
             if keys['Left']:
@@ -188,7 +188,6 @@ class Player(Object):
 
 
 class Bullet(Object):
-    """Пули, выпущенные игроком"""
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
 
@@ -357,6 +356,8 @@ def on_key_release(symbol, modifiers):
         keys['Right'] = False
     if symbol == key.SPACE:
         keys['Fire'] = False
+    if modifiers & key.MOD_CTRL:
+        pass
 
 
 def init():

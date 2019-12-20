@@ -325,7 +325,7 @@ def on_draw():
 
 @game_window.event
 def on_key_press(symbol, modifiers):
-    if symbol == key.P:
+    if symbol == key.P and game_run[0] is True:
         paused.reverse()
     elif symbol == key.ENTER and game_run[0] is False:
         init()

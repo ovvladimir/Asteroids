@@ -4,6 +4,10 @@ import random
 import math
 from pyglet.window import key
 
+import sys
+if sys.version_info.minor == 8:  # для версии python 3.8
+    import pyglet_ffmpeg2
+
 game_window = pyglet.window.Window(960, 720, caption='Asteroids')
 game_window.set_location(5, 30)
 game_window.set_mouse_visible(visible=False)
@@ -56,9 +60,9 @@ new_game_label = pyglet.text.Label(
 laser = pyglet.resource.media('laser.wav', streaming=False)
 sound = pyglet.resource.media('explosion.wav', streaming=False)
 
-player_image.anchor_x, player_image.anchor_y = player_image.width / 2., player_image.height / 2.
-asteroid_image.anchor_x, asteroid_image.anchor_y = asteroid_image.width / 2., asteroid_image.height / 2.
-bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width / 2., bullet_image.height / 2.
+player_image.anchor_x, player_image.anchor_y = player_image.width // 2, player_image.height // 2
+asteroid_image.anchor_x, asteroid_image.anchor_y = asteroid_image.width // 2, asteroid_image.height // 2
+bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width // 2, bullet_image.height // 2
 engine_image.anchor_x, engine_image.anchor_y = engine_image.width * 1.5, engine_image.height * 0.5
 
 
@@ -74,8 +78,8 @@ class Object(pyglet.sprite.Sprite):
         self.check_bounds()
 
     def check_bounds(self):
-        min_x = -self.image.width / 2.
-        min_y = -self.image.height / 2.
+        min_x = -self.image.width // 2
+        min_y = -self.image.height // 2
         max_x = game_window.width - min_x
         max_y = game_window.height - min_y
         if self.x < min_x:
@@ -88,8 +92,8 @@ class Object(pyglet.sprite.Sprite):
             self.y = min_y
 
     def collides_with(self, other_object):
-        collision_distance = self.image.width / 2. * self.scale \
-            + other_object.image.width / 2. * other_object.scale
+        collision_distance = self.image.width // 2 * self.scale \
+            + other_object.image.width // 2 * other_object.scale
         actual_distance = distance(self.position, other_object.position)
         return actual_distance <= collision_distance
 
@@ -112,7 +116,7 @@ class Player(Object):
         self.rotate_speed = 200
         self.bullet_speed = 800
         self.rotation = 0
-        self.position = game_window.width / 2., game_window.height / 2.
+        self.position = game_window.width // 2, game_window.height // 2
 
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
@@ -164,7 +168,7 @@ class Player(Object):
             self.engine_sprite.visible = False
             self.ship_speed = 0
             self.rotation = 0
-            self.position = game_window.width / 2., game_window.height / 2.
+            self.position = game_window.width // 2, game_window.height // 2
 
             self.opacity += 2
             if self.opacity >= 255:
@@ -172,7 +176,7 @@ class Player(Object):
 
     def fire(self):
         angle_radians = -math.radians(self.rotation)
-        ship_radius = self.image.width / 2
+        ship_radius = self.image.width // 2
         bullet_x = self.x + math.cos(angle_radians) * ship_radius
         bullet_y = self.y + math.sin(angle_radians) * ship_radius
         new_bullet = Bullet(bullet_x, bullet_y, batch=self.batch)
@@ -383,7 +387,7 @@ def init():
     player_ship.opacity = 0
     player_ship.ship_speed = 0
     player_ship.rotation = 0
-    player_ship.position = game_window.width / 2., game_window.height / 2.
+    player_ship.position = game_window.width // 2, game_window.height // 2
     game_run[0] = True
 
 

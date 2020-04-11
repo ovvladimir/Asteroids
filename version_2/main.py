@@ -211,7 +211,7 @@ class Bullet(Object):
 class Asteroid(Object):
     def __init__(self, *args, **kwargs):
         super(Asteroid, self).__init__(asteroid_image, *args, **kwargs)
-        self.rotate_speed = random.random() * 100.0 - 50.0
+        self.rotate_speed = random.randint(-50, 50)
 
     def handle_collision_with(self, other_object):
         super(Asteroid, self).handle_collision_with(other_object)
@@ -222,17 +222,17 @@ class Asteroid(Object):
                                         y=self.y,  # +i*50*random.choice([-1, 1]),
                                         batch=self.batch)
                 new_asteroid.rotation = random.randint(50 * i, 360)
-                new_asteroid.velocity_x = (random.random() * 40 * random.choice([-1, 1])
-                                           + self.velocity_x) * random.choice([1, 3])
-                new_asteroid.velocity_y = (random.random() * 40 * random.choice([-1, 1])
-                                           + self.velocity_y) * random.choice([1, 3])
+                new_asteroid.velocity_x = (
+                    random.randint(-40, 40) + self.velocity_x) * random.choice([1, 3])
+                new_asteroid.velocity_y = (
+                    random.randint(-40, 40) + self.velocity_y) * random.choice([1, 3])
                 new_asteroid.scale = self.scale * 0.5
                 game_objects.append(new_asteroid)
                 asteroid_list.append(new_asteroid)
 
     def update(self, dt):
         super(Asteroid, self).update(dt)
-        self.rotation += self.rotate_speed * dt
+        self.rotation = (self.rotation + self.rotate_speed * dt) % 360
 
 
 def asteroid(num_asteroids, player_position, batch=None):
@@ -245,8 +245,8 @@ def asteroid(num_asteroids, player_position, batch=None):
         new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y,
                                 batch=batch)
         new_asteroid.rotation = random.randint(10, 360)
-        new_asteroid.velocity_x = random.random() * 40 * random.choice([-1, 1])
-        new_asteroid.velocity_y = random.random() * 40 * random.choice([-1, 1])
+        new_asteroid.velocity_x = random.randint(-40, 40)
+        new_asteroid.velocity_y = random.randint(-40, 40)
         asteroids.append(new_asteroid)
     return asteroids
 

@@ -221,7 +221,7 @@ class Asteroid(Object):
                 new_asteroid = Asteroid(x=self.x,  # +i*50*random.choice([-1, 1]),
                                         y=self.y,  # +i*50*random.choice([-1, 1]),
                                         batch=self.batch)
-                new_asteroid.rotation = random.randint(50 * i, 360)
+                new_asteroid.rotation = random.randint(i, 360)
                 new_asteroid.velocity_x = (
                     random.randint(-40, 40) + self.velocity_x) * random.choice([1, 3])
                 new_asteroid.velocity_y = (
@@ -242,9 +242,8 @@ def asteroid(num_asteroids, player_position, batch=None):
         while distance((asteroid_x, asteroid_y), player_position) < 100:
             asteroid_x = random.randint(0, game_window.width)
             asteroid_y = random.randint(0, game_window.height)
-        new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y,
-                                batch=batch)
-        new_asteroid.rotation = random.randint(10, 360)
+        new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch)
+        new_asteroid.rotation = random.randint(0, 360)
         new_asteroid.velocity_x = random.randint(-40, 40)
         new_asteroid.velocity_y = random.randint(-40, 40)
         asteroids.append(new_asteroid)

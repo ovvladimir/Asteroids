@@ -33,6 +33,9 @@ INITIAL_NUMBER_OF_ASTEROIDS = 3
 NUMBER_OF_LIVES = 5
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
+group_back = pyglet.graphics.OrderedGroup(0)
+group_front = pyglet.graphics.OrderedGroup(2)
+
 player_image = pyglet.resource.image("ship2.png")
 bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
@@ -40,19 +43,19 @@ asteroid_image = pyglet.resource.image("asteroid.png")
 bg_image = pyglet.resource.image("starfield.jpg")
 bg_image.width, bg_image.height = WIDTH, HEIGHT
 for b in range(2):
-    backgraund.append(
-        pyglet.sprite.Sprite(img=bg_image, x=0 if b == 0 else -WIDTH, y=0, batch=main_batch))
+    backgraund.append(pyglet.sprite.Sprite(
+        img=bg_image, x=0 if b == 0 else -WIDTH, y=0, batch=main_batch, group=group_back))
 level_label = pyglet.text.Label(
     text='Asteroids', font_name='Arial', bold=True, color=(250, 250, 250, 150),
     font_size=26, x=WIDTH // 2, y=HEIGHT,
-    anchor_x='center', anchor_y='top', batch=main_batch)
+    anchor_x='center', anchor_y='top', batch=main_batch, group=group_front)
 score_label = pyglet.text.Label(
-    text='Score: 0', font_name='Arial', font_size=16,
-    x=5, y=HEIGHT - 5, anchor_x='left', anchor_y='top', batch=main_batch)
+    text='Score: 0', font_name='Arial', font_size=16, x=5, y=HEIGHT - 5,
+    anchor_x='left', anchor_y='top', batch=main_batch, group=group_front)
 asteroid_label = pyglet.text.Label(
     text='Asteroids: 3', font_name='Arial', font_size=16,
     x=5, y=score_label.y - score_label.font_size * 1.5,
-    anchor_x='left', anchor_y='top', batch=main_batch)
+    anchor_x='left', anchor_y='top', batch=main_batch, group=group_front)
 game_over_label = pyglet.text.Label(
     '', font_name='Arial', font_size=36, color=(50, 50, 255, 255),
     x=WIDTH // 2, y=HEIGHT // 2,

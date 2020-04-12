@@ -42,7 +42,7 @@ bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
 asteroid_image = pyglet.resource.image("asteroid.png")
 bg_image = pyglet.resource.image("starfield.jpg")
-bg_image.width, bg_image.height = WIDTH, HEIGHT
+bg_image.width, bg_image.height = WIDTH + 2, HEIGHT + 2
 for b in range(2):
     backgraund.append(pyglet.sprite.Sprite(
         img=bg_image, x=0 if b == 0 else -WIDTH, y=0, batch=main_batch, group=group_back))
@@ -262,7 +262,7 @@ def update(dt):
     [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
     for bg in backgraund:
-        bg.x += 1  # смещение фона
+        bg.x += 10 * dt  # смещение фона
         if bg.x >= WIDTH:
             bg.x = -WIDTH
 

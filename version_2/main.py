@@ -1,4 +1,3 @@
-# https://pyglet.readthedocs.io/en/stable/
 import pyglet
 import random
 import math
@@ -8,7 +7,9 @@ import sys
 if sys.version_info.minor == 8:  # для версии python 3.8
     import pyglet_ffmpeg2
 
-game_window = pyglet.window.Window(960, 720, caption='Asteroids')
+WIDTH, HEIGHT = 960, 720
+
+game_window = pyglet.window.Window(WIDTH, HEIGHT, caption='Asteroids')
 game_window.set_location(5, 30)
 game_window.set_mouse_visible(visible=False)
 counter = pyglet.window.FPSDisplay(window=game_window)
@@ -19,8 +20,7 @@ pyglet.resource.reindex()
 icon = pyglet.resource.image("ship.png")
 game_window.set_icon(icon)
 
-backgraund_x1 = [0]
-backgraund_x2 = [-game_window.width]
+backgraund = [0, -WIDTH]
 keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
 paused = [False, True]
 game_run = [True]
@@ -40,22 +40,22 @@ asteroid_image = pyglet.resource.image("asteroid.png")
 star_field_image = pyglet.resource.image("starfield.jpg")
 level_label = pyglet.text.Label(
     text='Asteroids', font_name='Arial', bold=True, color=(250, 250, 250, 150),
-    font_size=26, x=game_window.width // 2, y=game_window.height,
+    font_size=26, x=WIDTH // 2, y=HEIGHT,
     anchor_x='center', anchor_y='top', batch=main_batch)
 score_label = pyglet.text.Label(
     text='Points: 0', font_name='Arial', font_size=16,
-    x=5, y=game_window.height - 5, anchor_x='left', anchor_y='top', batch=main_batch)
+    x=5, y=HEIGHT - 5, anchor_x='left', anchor_y='top', batch=main_batch)
 asteroid_label = pyglet.text.Label(
     text='Asteroids: 3', font_name='Arial', font_size=16,
     x=5, y=score_label.y - score_label.font_size * 1.5,
     anchor_x='left', anchor_y='top', batch=main_batch)
 game_over_label = pyglet.text.Label(
     '', font_name='Arial', font_size=36, color=(50, 50, 255, 255),
-    x=game_window.width // 2, y=game_window.height // 2,
+    x=WIDTH // 2, y=HEIGHT // 2,
     anchor_x='center', anchor_y='center')
 new_game_label = pyglet.text.Label(
     '', font_name='Arial', font_size=26, color=(250, 250, 250, 150),
-    x=game_window.width // 2, y=game_over_label.y - game_over_label.font_size * 2,
+    x=WIDTH // 2, y=game_over_label.y - game_over_label.font_size * 2,
     anchor_x='center', anchor_y='center')
 laser = pyglet.resource.media('laser.wav', streaming=False)
 sound = pyglet.resource.media('explosion.wav', streaming=False)
@@ -80,8 +80,8 @@ class Object(pyglet.sprite.Sprite):
     def check_bounds(self):
         min_x = -self.image.width // 2
         min_y = -self.image.height // 2
-        max_x = game_window.width - min_x
-        max_y = game_window.height - min_y
+        max_x = WIDTH - min_x
+        max_y = HEIGHT - min_y
         if self.x < min_x:
             self.x = max_x
         elif self.x > max_x:
@@ -116,7 +116,7 @@ class Player(Object):
         self.rotate_speed = 200
         self.bullet_speed = 800
         self.rotation = 0
-        self.position = game_window.width // 2, game_window.height // 2
+        self.position = WIDTH // 2, HEIGHT // 2
 
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
@@ -168,7 +168,7 @@ class Player(Object):
             self.engine_sprite.visible = False
             self.ship_speed = 0
             self.rotation = 0
-            self.position = game_window.width // 2, game_window.height // 2
+            self.position = WIDTH // 2, HEIGHT // 2
 
             self.opacity += 2
             if self.opacity >= 255:
@@ -200,11 +200,11 @@ class Bullet(Object):
 
         if self.x < 0:
             self.dead = True
-        elif self.x > game_window.width:
+        elif self.x > WIDTH:
             self.dead = True
         elif self.y < 0:
             self.dead = True
-        elif self.y > game_window.height:
+        elif self.y > HEIGHT:
             self.dead = True
 
 
@@ -217,15 +217,10 @@ class Asteroid(Object):
         super(Asteroid, self).handle_collision_with(other_object)
         if self.dead and self.scale > 0.3:
             num_asteroids = 3
-            for i in range(num_asteroids):
-                new_asteroid = Asteroid(x=self.x,  # +i*50*random.choice([-1, 1]),
-                                        y=self.y,  # +i*50*random.choice([-1, 1]),
-                                        batch=self.batch)
-                new_asteroid.rotation = random.randint(i, 360)
-                new_asteroid.velocity_x = (
-                    random.randint(-40, 40) + self.velocity_x) * random.choice([1, 3])
-                new_asteroid.velocity_y = (
-                    random.randint(-40, 40) + self.velocity_y) * random.choice([1, 3])
+            for _ in range(num_asteroids):
+                new_asteroid = Asteroid(x=self.x, y=self.y, batch=self.batch)
+                new_asteroid.velocity_x = random.randint(-120, 120) + self.velocity_x
+                new_asteroid.velocity_y = random.randint(-120, 120) + self.velocity_y
                 new_asteroid.scale = self.scale * 0.5
                 game_objects.append(new_asteroid)
                 asteroid_list.append(new_asteroid)
@@ -237,11 +232,11 @@ class Asteroid(Object):
 
 def asteroid(num_asteroids, player_position, batch=None):
     asteroids = []
-    for i in range(num_asteroids):
+    for _ in range(num_asteroids):
         asteroid_x, asteroid_y = player_position
         while distance((asteroid_x, asteroid_y), player_position) < 100:
-            asteroid_x = random.randint(0, game_window.width)
-            asteroid_y = random.randint(0, game_window.height)
+            asteroid_x = random.randint(0, WIDTH)
+            asteroid_y = random.randint(0, HEIGHT)
         new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch)
         new_asteroid.rotation = random.randint(0, 360)
         new_asteroid.velocity_x = random.randint(-40, 40)
@@ -259,12 +254,12 @@ def update(dt):
     [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
     # смещение фона
-    backgraund_x1[0] += 0.1
-    backgraund_x2[0] += 0.1
-    if backgraund_x1[0] >= game_window.width:
-        backgraund_x1[0] = 0
-    if backgraund_x2[0] >= 0:
-        backgraund_x2[0] = -game_window.width
+    backgraund[0] += 0.1
+    backgraund[1] += 0.1
+    if backgraund[0] >= WIDTH:
+        backgraund[0] = 0
+    if backgraund[1] >= 0:
+        backgraund[1] = -WIDTH
 
     for index, obj_1 in enumerate(game_objects):
         for obj_2 in game_objects[index + 1:]:
@@ -300,8 +295,8 @@ def update(dt):
 def on_draw():
     game_window.clear()
 
-    star_field_image.blit(backgraund_x1[0], 0, width=game_window.width, height=game_window.height)
-    star_field_image.blit(backgraund_x2[0], 0, width=game_window.width, height=game_window.height)
+    for bg in backgraund:
+        star_field_image.blit(bg, 0, width=WIDTH, height=HEIGHT)
 
     if game_run[0] is True:
         main_batch.draw()
@@ -378,20 +373,20 @@ def init():
     game_objects.clear()
     for i in range(NUMBER_OF_LIVES):
         player_icons.append(pyglet.sprite.Sprite(
-            player_image, x=game_window.width - player_image.width // 4 - i * 30,
-            y=game_window.height - player_image.height // 4, batch=main_batch))
+            player_image, x=WIDTH - player_image.width // 4 - i * 30,
+            y=HEIGHT - player_image.height // 4, batch=main_batch))
         player_icons[i].scale = 0.33
     asteroid_list.extend(asteroid(INITIAL_NUMBER_OF_ASTEROIDS, player_ship.position, main_batch))
     game_objects.extend([player_ship] + asteroid_list)
     player_ship.opacity = 0
     player_ship.ship_speed = 0
     player_ship.rotation = 0
-    player_ship.position = game_window.width // 2, game_window.height // 2
+    player_ship.position = WIDTH // 2, HEIGHT // 2
     game_run[0] = True
 
 
 if __name__ == '__main__':
-    player_ship = Player(x=game_window.width // 2, y=game_window.height // 2, batch=main_batch)
+    player_ship = Player(x=WIDTH // 2, y=HEIGHT // 2, batch=main_batch)
     init()
 
     pyglet.clock.schedule_interval(update, 1 / 60.0)

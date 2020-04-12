@@ -263,10 +263,8 @@ def update(dt):
 
     for bg in backgraund:
         bg.x += 1  # смещение фона
-    if backgraund[0].x > WIDTH:
-        backgraund[0].x = 0
-    if backgraund[1].x > 0:
-        backgraund[1].x = -WIDTH
+        if bg.x >= WIDTH:
+            bg.x = -WIDTH
 
     for index, obj_1 in enumerate(game_objects):
         for obj_2 in game_objects[index + 1:]:

@@ -20,7 +20,6 @@ pyglet.resource.reindex()
 icon = pyglet.resource.image("ship.png")
 game_window.set_icon(icon)
 
-backgraund = [0, -WIDTH]
 keys = dict(Left=False, Right=False, Up=False, Down=False, Fire=False)
 paused = [False, True]
 game_run = [True]
@@ -29,6 +28,7 @@ asteroid_list = []
 bullet_list = []
 player_icons = []
 game_objects = []
+backgraund = []
 INITIAL_NUMBER_OF_ASTEROIDS = 3
 NUMBER_OF_LIVES = 5
 
@@ -37,13 +37,17 @@ player_image = pyglet.resource.image("ship2.png")
 bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
 asteroid_image = pyglet.resource.image("asteroid.png")
-star_field_image = pyglet.resource.image("starfield.jpg")
+bg_image = pyglet.resource.image("starfield.jpg")
+bg_image.width, bg_image.height = WIDTH, HEIGHT
+for b in range(2):
+    backgraund.append(
+        pyglet.sprite.Sprite(img=bg_image, x=0 if b == 0 else -WIDTH, y=0, batch=main_batch))
 level_label = pyglet.text.Label(
     text='Asteroids', font_name='Arial', bold=True, color=(250, 250, 250, 150),
     font_size=26, x=WIDTH // 2, y=HEIGHT,
     anchor_x='center', anchor_y='top', batch=main_batch)
 score_label = pyglet.text.Label(
-    text='Points: 0', font_name='Arial', font_size=16,
+    text='Score: 0', font_name='Arial', font_size=16,
     x=5, y=HEIGHT - 5, anchor_x='left', anchor_y='top', batch=main_batch)
 asteroid_label = pyglet.text.Label(
     text='Asteroids: 3', font_name='Arial', font_size=16,
@@ -102,7 +106,7 @@ class Object(pyglet.sprite.Sprite):
             self.dead = True
             if self in asteroid_list:
                 score[0] += 1
-                score_label.text = f"Points: {score[0]}"
+                score_label.text = f"Score: {score[0]}"
                 sound.play()
 
 
@@ -253,13 +257,12 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
 def update(dt):
     [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
 
-    # смещение фона
-    backgraund[0] += 0.1
-    backgraund[1] += 0.1
-    if backgraund[0] >= WIDTH:
-        backgraund[0] = 0
-    if backgraund[1] >= 0:
-        backgraund[1] = -WIDTH
+    for bg in backgraund:
+        bg.x += 1  # смещение фона
+    if backgraund[0].x > WIDTH:
+        backgraund[0].x = 0
+    if backgraund[1].x > 0:
+        backgraund[1].x = -WIDTH
 
     for index, obj_1 in enumerate(game_objects):
         for obj_2 in game_objects[index + 1:]:
@@ -294,9 +297,6 @@ def update(dt):
 @game_window.event
 def on_draw():
     game_window.clear()
-
-    for bg in backgraund:
-        star_field_image.blit(bg, 0, width=WIDTH, height=HEIGHT)
 
     if game_run[0] is True:
         main_batch.draw()
@@ -360,7 +360,7 @@ def on_key_release(symbol, modifiers):
 
 def init():
     score[0] = 0
-    score_label.text = f"Points: {score[0]}"
+    score_label.text = f"Score: {score[0]}"
     for al in asteroid_list:
         al.delete()
     for pi in player_icons:

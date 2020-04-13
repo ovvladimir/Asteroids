@@ -29,7 +29,8 @@ bullet_list = []
 player_icons = []
 game_objects = []
 backgraund = []
-INITIAL_NUMBER_OF_ASTEROIDS = 3
+score_label_color = [(255, 100, 100, 255), (255, 100, 100, 0)]
+INITIAL_NUMBER_OF_ASTEROIDS = 5
 NUMBER_OF_LIVES = 5
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
@@ -238,7 +239,7 @@ class Asteroid(Object):
         self.rotation = (self.rotation + self.rotate_speed * dt) % 360
 
 
-def asteroid(num_asteroids, player_position, batch=None, group=None):
+def init_asteroids(num_asteroids, player_position, batch=None, group=None):
     asteroids = []
     for _ in range(num_asteroids):
         asteroid_x, asteroid_y = player_position
@@ -247,8 +248,8 @@ def asteroid(num_asteroids, player_position, batch=None, group=None):
             asteroid_y = random.randint(0, HEIGHT)
         new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch, group=group_front)
         new_asteroid.rotation = random.randint(0, 360)
-        new_asteroid.velocity_x = random.randint(-40, 40)
-        new_asteroid.velocity_y = random.randint(-40, 40)
+        new_asteroid.velocity_x = random.randint(-50, 50)
+        new_asteroid.velocity_y = random.randint(-50, 50)
         asteroids.append(new_asteroid)
     return asteroids
 
@@ -259,7 +260,7 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
 
 
 def update(dt):
-    [obj.update(dt) for obj in game_objects if paused[0] is False and game_run[0] is True]
+    [obj.update(dt) for obj in game_objects if paused[0] is False]
 
     for bg in backgraund:
         bg.x += 10 * dt  # смещение фона
@@ -292,8 +293,10 @@ def update(dt):
                     asteroid_list.remove(obj)
 
     asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
-    if len(asteroid_list) <= 0 or len(player_icons) <= 0:
+    if (len(asteroid_list) <= 0 or len(player_icons) <= 0) and game_run[0] is True:
         game_run[0] = False
+        pyglet.clock.unschedule(update)
+        pyglet.clock.schedule_interval_soft(text, 1)
 
 
 @game_window.event
@@ -304,15 +307,13 @@ def on_draw():
         main_batch.draw()
         counter.draw()
         if paused[0] is True:
-            game_over_label.text = "PAUSE"
+            game_over_label.text = 'PAUSE'
             game_over_label.draw()
     else:
-        if score[0] > 38:
-            game_over_label.text = "YOU ROCK!"
-        elif len(asteroid_list) <= 0 and score[0] / (5 - len(player_icons)) > 1 and len(player_icons) > 0:
-            game_over_label.text = "VICTORY!"
-        elif len(player_icons) <= 0 or len(asteroid_list) <= 0:
-            game_over_label.text = "GAME OVER"
+        if score[0] == INITIAL_NUMBER_OF_ASTEROIDS * 13:
+            game_over_label.text = 'YOU ROCK!'
+        else:
+            game_over_label.text = 'GAME OVER'
         new_game_label.text = 'press Enter for a new game'
         new_game_label.draw()
         game_over_label.draw()
@@ -360,9 +361,17 @@ def on_key_release(symbol, modifiers):
         pass
 
 
+def text(dt):
+    score_label_color.reverse()
+    score_label.color = score_label_color[0]
+
+
 def init():
+    pyglet.clock.unschedule(text)
+    pyglet.clock.schedule_interval(update, 1 / 60.0)
     score[0] = 0
     score_label.text = f"Score: {score[0]}"
+    score_label.color = (255, 255, 255, 255)
     for al in asteroid_list:
         al.delete()
     for pi in player_icons:
@@ -378,7 +387,7 @@ def init():
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
             y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_front))
         player_icons[i].scale = 0.33
-    asteroid_list.extend(asteroid(
+    asteroid_list.extend(init_asteroids(
         INITIAL_NUMBER_OF_ASTEROIDS, player_ship.position, main_batch, group_front))
     game_objects.extend([player_ship] + asteroid_list)
     player_ship.opacity = 0
@@ -391,6 +400,4 @@ def init():
 if __name__ == '__main__':
     player_ship = Player(x=WIDTH // 2, y=HEIGHT // 2, batch=main_batch, group=group_front)
     init()
-
-    pyglet.clock.schedule_interval(update, 1 / 60.0)
     pyglet.app.run()

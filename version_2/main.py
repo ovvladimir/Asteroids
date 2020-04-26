@@ -30,7 +30,7 @@ player_icons = []
 game_objects = []
 backgraund = []
 score_label_color = [(255, 100, 100, 255), (255, 100, 100, 0)]
-INITIAL_NUMBER_OF_ASTEROIDS = 5
+INITIAL_NUMBER_OF_ASTEROIDS = 1
 NUMBER_OF_LIVES = 5
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
@@ -246,7 +246,7 @@ def init_asteroids(num_asteroids, player_position, batch=None, group=None):
         while distance((asteroid_x, asteroid_y), player_position) < 100:
             asteroid_x = random.randint(0, WIDTH)
             asteroid_y = random.randint(0, HEIGHT)
-        new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch, group=group_front)
+        new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch, group=group)
         new_asteroid.rotation = random.randint(0, 360)
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
@@ -260,7 +260,7 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
 
 
 def update(dt):
-    [obj.update(dt) for obj in game_objects if paused[0] is False]
+    [obj.update(dt) for obj in game_objects if not paused[0]]
 
     for bg in backgraund:
         bg.x += 10 * dt  # смещение фона
@@ -293,7 +293,7 @@ def update(dt):
                     asteroid_list.remove(obj)
 
     asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
-    if (len(asteroid_list) <= 0 or len(player_icons) <= 0) and game_run[0] is True:
+    if (len(asteroid_list) <= 0 or len(player_icons) <= 0) and game_run[0]:
         game_run[0] = False
         pyglet.clock.unschedule(update)
         pyglet.clock.schedule_interval_soft(text, 1)
@@ -303,10 +303,10 @@ def update(dt):
 def on_draw():
     game_window.clear()
 
-    if game_run[0] is True:
+    if game_run[0]:
         main_batch.draw()
         counter.draw()
-        if paused[0] is True:
+        if paused[0]:
             game_over_label.text = 'PAUSE'
             game_over_label.draw()
     else:
@@ -326,9 +326,9 @@ def on_draw():
 
 @game_window.event
 def on_key_press(symbol, modifiers):
-    if symbol == key.P and game_run[0] is True:
+    if symbol == key.P and game_run[0]:
         paused.reverse()
-    elif symbol == key.ENTER and game_run[0] is False:
+    elif symbol == key.ENTER and not game_run[0]:
         init()
     elif modifiers & key.MOD_CTRL:
         pass
@@ -361,7 +361,7 @@ def on_key_release(symbol, modifiers):
         pass
 
 
-def text(dt):
+def text(_):
     score_label_color.reverse()
     score_label.color = score_label_color[0]
 
@@ -385,7 +385,7 @@ def init():
     for i in range(NUMBER_OF_LIVES):
         player_icons.append(pyglet.sprite.Sprite(
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
-            y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_front))
+            y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_middle))
         player_icons[i].scale = 0.33
     asteroid_list.extend(init_asteroids(
         INITIAL_NUMBER_OF_ASTEROIDS, player_ship.position, main_batch, group_front))

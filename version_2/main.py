@@ -30,7 +30,7 @@ player_icons = []
 game_objects = []
 backgraund = []
 score_label_color = [(255, 100, 100, 255), (255, 100, 100, 0)]
-INITIAL_NUMBER_OF_ASTEROIDS = 1
+INITIAL_NUMBER_OF_ASTEROIDS = 5
 NUMBER_OF_LIVES = 5
 
 main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу

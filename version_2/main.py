@@ -3,10 +3,6 @@ import random
 import math
 from pyglet.window import key
 
-import sys
-if sys.version_info.minor == 8:  # для версии python 3.8
-    import pyglet_ffmpeg2
-
 WIDTH, HEIGHT = 960, 720
 
 game_window = pyglet.window.Window(WIDTH, HEIGHT, caption='Asteroids')
@@ -75,18 +71,16 @@ bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width // 2, bullet_i
 engine_image.anchor_x, engine_image.anchor_y = engine_image.width * 1.5, engine_image.height * 0.5
 
 
-class Object(pyglet.sprite.Sprite):
+class Sprite(pyglet.sprite.Sprite):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(Sprite, self).__init__(*args, **kwargs)
         self.velocity_x, self.velocity_y = 0.0, 0.0
         self.dead = False
 
-    def update(self, dt):
+    def update_sprite(self, dt):
         self.x += self.velocity_x * dt
         self.y += self.velocity_y * dt
-        self.check_bounds()
 
-    def check_bounds(self):
         min_x = -self.image.width // 2
         min_y = -self.image.height // 2
         max_x = WIDTH - min_x
@@ -100,22 +94,8 @@ class Object(pyglet.sprite.Sprite):
         elif self.y > max_y:
             self.y = min_y
 
-    def collides_with(self, other_object):
-        collision_distance = self.image.width // 2 * self.scale \
-            + other_object.image.width // 2 * other_object.scale
-        actual_distance = distance(self.position, other_object.position)
-        return actual_distance <= collision_distance
 
-    def handle_collision_with(self, other_object):
-        if other_object.__class__ is not self.__class__:
-            self.dead = True
-            if self in asteroid_list:
-                score[0] += 1
-                score_label.text = f"Score: {score[0]}"
-                sound.play()
-
-
-class Player(Object):
+class Player(Sprite):
     def __init__(self, *args, **kwargs):
         super(Player, self).__init__(img=player_image, *args, **kwargs)
         self.ship_thrust = 0
@@ -132,8 +112,8 @@ class Player(Object):
 
         self.opacity = 0  # прозрачность
 
-    def update(self, dt):
-        super(Player, self).update(dt)
+    def update_sprite(self, dt):
+        super(Player, self).update_sprite(dt)
         self.ship_speed += self.ship_thrust
         if self.ship_speed > 0:
             self.ship_speed -= self.ship_drag
@@ -200,12 +180,12 @@ class Player(Object):
         laser.play()
 
 
-class Bullet(Object):
+class Bullet(Sprite):
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
 
-    def update(self, dt):
-        super(Bullet, self).update(dt)
+    def update_sprite(self, dt):
+        super(Bullet, self).update_sprite(dt)
 
         if self.x < 0:
             self.dead = True
@@ -217,13 +197,18 @@ class Bullet(Object):
             self.dead = True
 
 
-class Asteroid(Object):
+class Asteroid(Sprite):
     def __init__(self, *args, **kwargs):
         super(Asteroid, self).__init__(asteroid_image, *args, **kwargs)
         self.rotate_speed = random.randint(-50, 50)
 
     def handle_collision_with(self, other_object):
-        super(Asteroid, self).handle_collision_with(other_object)
+        if other_object.__class__ is not self.__class__:
+            other_object.dead = True
+            self.dead = True
+            score[0] += 1
+            score_label.text = f"Score: {score[0]}"
+            sound.play()
         if self.dead and self.scale > 0.3:
             num_asteroids = 3
             for _ in range(num_asteroids):
@@ -234,8 +219,8 @@ class Asteroid(Object):
                 game_objects.append(new_asteroid)
                 asteroid_list.append(new_asteroid)
 
-    def update(self, dt):
-        super(Asteroid, self).update(dt)
+    def update_sprite(self, dt):
+        super(Asteroid, self).update_sprite(dt)
         self.rotation = (self.rotation + self.rotate_speed * dt) % 360
 
 
@@ -260,7 +245,7 @@ def distance(point_1=(0, 0), point_2=(0, 0)):
 
 
 def update(dt):
-    [obj.update(dt) for obj in game_objects if not paused[0]]
+    [obj.update_sprite(dt) for obj in game_objects if not paused[0]]
 
     for bg in backgraund:
         bg.x += 10 * dt  # смещение фона
@@ -271,7 +256,11 @@ def update(dt):
         for obj_2 in game_objects[index + 1:]:
             if not obj_1.dead and not obj_2.dead:
                 if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
-                    if obj_1.collides_with(obj_2):
+                    # collision
+                    collision_distance = obj_1.image.width // 2 * obj_1.scale \
+                        + obj_2.image.width // 2 * obj_2.scale
+                    actual_distance = distance(obj_1.position, obj_2.position)
+                    if actual_distance <= collision_distance:
                         if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
                             obj_1.opacity = 0
                             obj_2.dead = True
@@ -280,7 +269,6 @@ def update(dt):
                             sound.play()
                         else:
                             obj_1.handle_collision_with(obj_2)
-                            obj_2.handle_collision_with(obj_1)
 
     for obj in game_objects:
         if obj.dead:

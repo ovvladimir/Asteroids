@@ -106,6 +106,8 @@ class Player(Sprite):
         self.bullet_speed = 800
         self.rotation = 0
         self.position = WIDTH // 2, HEIGHT // 2
+        self.ship_radius = player_image.width // 2
+        self.collide_size = (player_image.width + player_image.height) // 4
 
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
@@ -165,11 +167,9 @@ class Player(Sprite):
 
     def fire(self):
         angle_radians = -math.radians(self.rotation)
-        ship_radius = self.image.width // 2
-        bullet_x = self.x + math.cos(angle_radians) * ship_radius
-        bullet_y = self.y + math.sin(angle_radians) * ship_radius
+        bullet_x = self.x + math.cos(angle_radians) * self.ship_radius
+        bullet_y = self.y + math.sin(angle_radians) * self.ship_radius
         new_bullet = Bullet(bullet_x, bullet_y, batch=self.batch, group=group_front)
-        new_bullet.scale = 0.7
         new_bullet.rotation = self.rotation
         bullet_vx = math.cos(math.radians(new_bullet.rotation)) * self.bullet_speed
         bullet_vy = -math.sin(math.radians(new_bullet.rotation)) * self.bullet_speed
@@ -183,6 +183,8 @@ class Player(Sprite):
 class Bullet(Sprite):
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
+        self.scale = 0.7
+        self.collide_size = bullet_image.height * 0.5
 
     def update_sprite(self, dt):
         super(Bullet, self).update_sprite(dt)
@@ -216,6 +218,7 @@ class Asteroid(Sprite):
                 new_asteroid.velocity_x = random.randint(-120, 120) + self.velocity_x
                 new_asteroid.velocity_y = random.randint(-120, 120) + self.velocity_y
                 new_asteroid.scale = self.scale * 0.5
+                new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.5
                 game_objects.append(new_asteroid)
                 asteroid_list.append(new_asteroid)
 
@@ -235,6 +238,7 @@ def init_asteroids(num_asteroids, player_position, batch=None, group=None):
         new_asteroid.rotation = random.randint(0, 360)
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
+        new_asteroid.collide_size = asteroid_image.width * 0.5
         asteroids.append(new_asteroid)
     return asteroids
 
@@ -257,8 +261,7 @@ def update(dt):
             if not obj_1.dead and not obj_2.dead:
                 if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
                     # collision
-                    collision_distance = obj_1.image.width // 2 * obj_1.scale \
-                        + obj_2.image.width // 2 * obj_2.scale
+                    collision_distance = obj_1.collide_size + obj_2.collide_size
                     actual_distance = distance(obj_1.position, obj_2.position)
                     if actual_distance <= collision_distance:
                         if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):

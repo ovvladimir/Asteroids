@@ -201,7 +201,7 @@ class Asteroid(Sprite):
         self.rotate_speed = random.randint(-50, 50)
 
     def handle_collision_with(self, other_object):
-        if other_object.__class__ is not self.__class__:
+        if isinstance(other_object, Bullet):
             score[0] += 1
             score_label.text = f"Score: {score[0]}"
             sound.play()

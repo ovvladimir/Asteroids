@@ -266,8 +266,8 @@ def update(dt):
                         obj_2.delete()
                         asteroid_list.remove(obj_2)
                         game_objects.remove(obj_2)
-                        icon = player_icons.pop()
-                        icon.delete()
+                        icn = player_icons.pop()
+                        icn.delete()
                         sound.play()
                     else:
                         obj_1.handle_collision_with(obj_2)

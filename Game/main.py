@@ -27,9 +27,10 @@ game_objects = []
 background = []
 score_label_color = [(255, 100, 100, 255), (255, 100, 100, 0)]
 INITIAL_NUMBER_OF_ASTEROIDS = 5
+NUMBER_OF_NEW_ASTEROIDS = 3
 NUMBER_OF_LIVES = 5
 
-main_batch = pyglet.graphics.Batch()  # рисуем (draw) все изображения сразу
+main_batch = pyglet.graphics.Batch()
 group_back = pyglet.graphics.OrderedGroup(0)
 group_middle = pyglet.graphics.OrderedGroup(1)
 group_front = pyglet.graphics.OrderedGroup(2)
@@ -75,7 +76,6 @@ class Sprite(pyglet.sprite.Sprite):
     def __init__(self, *args, **kwargs):
         super(Sprite, self).__init__(*args, **kwargs)
         self.velocity_x, self.velocity_y = 0.0, 0.0
-        self.dead = False
 
     def update_sprite(self, dt):
         self.x += self.velocity_x * dt
@@ -183,20 +183,16 @@ class Player(Sprite):
 class Bullet(Sprite):
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
-        self.scale = 0.7
+        # self.scale = 0.7
         self.collide_size = bullet_image.height * 0.5
 
     def update_sprite(self, dt):
         super(Bullet, self).update_sprite(dt)
 
-        if self.x < 0:
-            self.dead = True
-        elif self.x > WIDTH:
-            self.dead = True
-        elif self.y < 0:
-            self.dead = True
-        elif self.y > HEIGHT:
-            self.dead = True
+        if self.x < 0 or self.x > WIDTH or self.y < 0 or self.y > HEIGHT:
+            self.delete()  # удаление из видеопамяти
+            bullet_list.remove(self)
+            game_objects.remove(self)
 
 
 class Asteroid(Sprite):
@@ -206,21 +202,24 @@ class Asteroid(Sprite):
 
     def handle_collision_with(self, other_object):
         if other_object.__class__ is not self.__class__:
-            other_object.dead = True
-            self.dead = True
             score[0] += 1
             score_label.text = f"Score: {score[0]}"
             sound.play()
-        if self.dead and self.scale > 0.3:
-            num_asteroids = 3
-            for _ in range(num_asteroids):
-                new_asteroid = Asteroid(x=self.x, y=self.y, batch=self.batch, group=self.group)
-                new_asteroid.velocity_x = random.randint(-120, 120) + self.velocity_x
-                new_asteroid.velocity_y = random.randint(-120, 120) + self.velocity_y
-                new_asteroid.scale = self.scale * 0.5
-                new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.5
-                game_objects.append(new_asteroid)
-                asteroid_list.append(new_asteroid)
+            if self.scale > 0.3:
+                for _ in range(NUMBER_OF_NEW_ASTEROIDS):
+                    new_asteroid = Asteroid(x=self.x, y=self.y, batch=self.batch, group=self.group)
+                    new_asteroid.velocity_x = random.randint(-120, 120) + self.velocity_x
+                    new_asteroid.velocity_y = random.randint(-120, 120) + self.velocity_y
+                    new_asteroid.scale = self.scale * 0.5
+                    new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.5
+                    game_objects.append(new_asteroid)
+                    asteroid_list.append(new_asteroid)
+            other_object.delete()
+            bullet_list.remove(other_object)
+            game_objects.remove(other_object)
+            self.delete()
+            asteroid_list.remove(self)
+            game_objects.remove(self)
 
     def update_sprite(self, dt):
         super(Asteroid, self).update_sprite(dt)
@@ -244,50 +243,42 @@ def init_asteroids(num_asteroids, player_position, batch=None, group=None):
 
 
 def distance(point_1=(0, 0), point_2=(0, 0)):
-    """Возвращает расстояние между двумя точками"""
+    """возвращает расстояние между двумя точками"""
     return math.sqrt((point_1[0] - point_2[0]) ** 2 + (point_1[1] - point_2[1]) ** 2)
 
 
 def update(dt):
-    [obj.update_sprite(dt) for obj in game_objects if not paused[0]]
 
     for bg in background:
-        bg.x += 10 * dt  # смещение фона
+        bg.x += 10 * dt
         if bg.x >= WIDTH:
             bg.x = -WIDTH
 
     for index, obj_1 in enumerate(game_objects):
         for obj_2 in game_objects[index + 1:]:
-            if not obj_1.dead and not obj_2.dead:
-                if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
-                    # collision
-                    collision_distance = obj_1.collide_size + obj_2.collide_size
-                    actual_distance = distance(obj_1.position, obj_2.position)
-                    if actual_distance <= collision_distance:
-                        if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
-                            obj_1.opacity = 0
-                            obj_2.dead = True
-                            player_icons[-1].delete()
-                            player_icons.pop()
-                            sound.play()
-                        else:
-                            obj_1.handle_collision_with(obj_2)
-
-    for obj in game_objects:
-        if obj.dead:
-            if obj is not player_ship:
-                obj.delete()
-                game_objects.remove(obj)
-                if obj in bullet_list:
-                    bullet_list.remove(obj)
-                if isinstance(obj, Asteroid):
-                    asteroid_list.remove(obj)
+            if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
+                """проверка столкновений"""
+                collision_distance = obj_1.collide_size + obj_2.collide_size
+                actual_distance = distance(obj_1.position, obj_2.position)
+                if actual_distance <= collision_distance:
+                    if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
+                        obj_1.opacity = 0
+                        obj_2.delete()
+                        asteroid_list.remove(obj_2)
+                        game_objects.remove(obj_2)
+                        icon = player_icons.pop()
+                        icon.delete()
+                        sound.play()
+                    else:
+                        obj_1.handle_collision_with(obj_2)
 
     asteroid_label.text = f"Asteroids: {len(asteroid_list)}"
     if (len(asteroid_list) <= 0 or len(player_icons) <= 0) and game_run[0]:
         game_run[0] = False
         pyglet.clock.unschedule(update)
         pyglet.clock.schedule_interval_soft(text, 1)
+
+    [obj.update_sprite(dt) for obj in game_objects if not paused[0]]
 
 
 @game_window.event
@@ -365,10 +356,10 @@ def init():
     score_label.color = (255, 255, 255, 255)
     for al in asteroid_list:
         al.delete()
-    for pi in player_icons:
-        pi.delete()
     for bl in bullet_list:
         bl.delete()
+    for il in player_icons:
+        il.delete()
     asteroid_list.clear()
     bullet_list.clear()
     player_icons.clear()

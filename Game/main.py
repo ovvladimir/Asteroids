@@ -1,6 +1,7 @@
-import pyglet
+from numba import njit, float_
 import random
 import math
+import pyglet
 from pyglet.window import key
 
 WIDTH, HEIGHT = 960, 720
@@ -226,25 +227,25 @@ class Asteroid(Sprite):
         self.rotation = (self.rotation + self.rotate_speed * dt) % 360
 
 
-def init_asteroids(num_asteroids, player_position, batch=None, group=None):
-    asteroids = []
-    for _ in range(num_asteroids):
-        asteroid_x, asteroid_y = player_position
-        while distance((asteroid_x, asteroid_y), player_position) < 100:
-            asteroid_x = random.randint(0, WIDTH)
-            asteroid_y = random.randint(0, HEIGHT)
+def init_asteroids(batch=None, group=None):
+    for _ in range(INITIAL_NUMBER_OF_ASTEROIDS):
+        asteroid_x, asteroid_y = random.randrange(WIDTH), random.randrange(HEIGHT)
+        while distance(asteroid_x, asteroid_y, *player_ship.position) < 150:
+            asteroid_x = random.randrange(WIDTH)
+            asteroid_y = random.randrange(HEIGHT)
         new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch, group=group)
-        new_asteroid.rotation = random.randint(0, 360)
+        new_asteroid.rotation = random.randrange(360)
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
         new_asteroid.collide_size = asteroid_image.width * 0.5
-        asteroids.append(new_asteroid)
-    return asteroids
+        game_objects.append(new_asteroid)
+        asteroid_list.append(new_asteroid)
 
 
-def distance(point_1=(0, 0), point_2=(0, 0)):
+@njit(float_(float_, float_, float_, float_))
+def distance(x1, y1, x2, y2):
     """возвращает расстояние между двумя точками"""
-    return math.sqrt((point_1[0] - point_2[0]) ** 2 + (point_1[1] - point_2[1]) ** 2)
+    return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
 
 def update(dt):
@@ -259,7 +260,7 @@ def update(dt):
             if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
                 """проверка столкновений"""
                 collision_distance = obj_1.collide_size + obj_2.collide_size
-                actual_distance = distance(obj_1.position, obj_2.position)
+                actual_distance = distance(*obj_1.position, *obj_2.position)
                 if actual_distance <= collision_distance:
                     if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
                         obj_1.opacity = 0
@@ -369,9 +370,8 @@ def init():
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
             y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_middle))
         player_icons[i].scale = 0.33
-    asteroid_list.extend(init_asteroids(
-        INITIAL_NUMBER_OF_ASTEROIDS, player_ship.position, main_batch, group_front))
-    game_objects.extend([player_ship] + asteroid_list)
+    init_asteroids(main_batch, group_front)
+    game_objects.extend([player_ship])
     player_ship.opacity = 0
     player_ship.ship_speed = 0
     player_ship.rotation = 0
@@ -380,6 +380,6 @@ def init():
 
 
 if __name__ == '__main__':
-    player_ship = Player(x=WIDTH // 2, y=HEIGHT // 2, batch=main_batch, group=group_front)
+    player_ship = Player(batch=main_batch, group=group_front)
     init()
     pyglet.app.run()

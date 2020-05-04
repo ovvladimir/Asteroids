@@ -1,4 +1,4 @@
-from numba import njit, float_
+from numba import njit
 import random
 import math
 import pyglet
@@ -228,6 +228,7 @@ class Asteroid(Sprite):
 
 
 def init_asteroids(batch=None, group=None):
+    asteroids = []
     for _ in range(INITIAL_NUMBER_OF_ASTEROIDS):
         asteroid_x, asteroid_y = random.randrange(WIDTH), random.randrange(HEIGHT)
         while distance(asteroid_x, asteroid_y, *player_ship.position) < 150:
@@ -238,11 +239,11 @@ def init_asteroids(batch=None, group=None):
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
         new_asteroid.collide_size = asteroid_image.width * 0.5
-        game_objects.append(new_asteroid)
-        asteroid_list.append(new_asteroid)
+        asteroids.append(new_asteroid)
+    return asteroids
 
 
-@njit(float_(float_, float_, float_, float_))
+@njit('float64(float64, float64, float64, float64)')
 def distance(x1, y1, x2, y2):
     """возвращает расстояние между двумя точками"""
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
@@ -370,8 +371,8 @@ def init():
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
             y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_middle))
         player_icons[i].scale = 0.33
-    init_asteroids(main_batch, group_front)
-    game_objects.extend([player_ship])
+    asteroid_list.extend(init_asteroids(main_batch, group_front))
+    game_objects.extend([player_ship] + asteroid_list)
     player_ship.opacity = 0
     player_ship.ship_speed = 0
     player_ship.rotation = 0

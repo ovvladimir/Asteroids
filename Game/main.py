@@ -228,7 +228,6 @@ class Asteroid(Sprite):
 
 
 def init_asteroids(batch=None, group=None):
-    asteroids = []
     for _ in range(INITIAL_NUMBER_OF_ASTEROIDS):
         asteroid_x, asteroid_y = random.randrange(WIDTH), random.randrange(HEIGHT)
         while distance(asteroid_x, asteroid_y, *player_ship.position) < 150:
@@ -239,8 +238,8 @@ def init_asteroids(batch=None, group=None):
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
         new_asteroid.collide_size = asteroid_image.width * 0.5
-        asteroids.append(new_asteroid)
-    return asteroids
+        game_objects.append(new_asteroid)
+        asteroid_list.append(new_asteroid)
 
 
 @njit('float64(float64, float64, float64, float64)')
@@ -366,17 +365,17 @@ def init():
     bullet_list.clear()
     player_icons.clear()
     game_objects.clear()
+    game_objects.append(player_ship)
+    player_ship.opacity = 0
+    player_ship.ship_speed = 0
+    player_ship.rotation = 0
+    player_ship.position = WIDTH // 2, HEIGHT // 2
     for i in range(NUMBER_OF_LIVES):
         player_icons.append(pyglet.sprite.Sprite(
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
             y=HEIGHT - player_image.height // 4, batch=main_batch, group=group_middle))
         player_icons[i].scale = 0.33
-    asteroid_list.extend(init_asteroids(main_batch, group_front))
-    game_objects.extend([player_ship] + asteroid_list)
-    player_ship.opacity = 0
-    player_ship.ship_speed = 0
-    player_ship.rotation = 0
-    player_ship.position = WIDTH // 2, HEIGHT // 2
+    init_asteroids(main_batch, group_front)
     game_run[0] = True
 
 

@@ -1,8 +1,10 @@
-from numba import njit
 import random
 import math
 import pyglet
 from pyglet.window import key
+
+import distance_module
+# from numba import njit
 
 WIDTH, HEIGHT = 960, 720
 
@@ -230,7 +232,7 @@ class Asteroid(Sprite):
 def init_asteroids(batch=None, group=None):
     for _ in range(INITIAL_NUMBER_OF_ASTEROIDS):
         asteroid_x, asteroid_y = random.randrange(WIDTH), random.randrange(HEIGHT)
-        while distance(asteroid_x, asteroid_y, *player_ship.position) < 150:
+        while distance_module.distancef(asteroid_x, asteroid_y, *player_ship.position) < 150:
             asteroid_x = random.randrange(WIDTH)
             asteroid_y = random.randrange(HEIGHT)
         new_asteroid = Asteroid(x=asteroid_x, y=asteroid_y, batch=batch, group=group)
@@ -242,10 +244,12 @@ def init_asteroids(batch=None, group=None):
         asteroid_list.append(new_asteroid)
 
 
+'''
 @njit('float64(float64, float64, float64, float64)')
 def distance(x1, y1, x2, y2):
     """возвращает расстояние между двумя точками"""
     return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+'''
 
 
 def update(dt):
@@ -260,7 +264,7 @@ def update(dt):
             if not (isinstance(obj_1, Player) and isinstance(obj_2, Bullet)):
                 """проверка столкновений"""
                 collision_distance = obj_1.collide_size + obj_2.collide_size
-                actual_distance = distance(*obj_1.position, *obj_2.position)
+                actual_distance = distance_module.distancef(*obj_1.position, *obj_2.position)
                 if actual_distance <= collision_distance:
                     if isinstance(obj_1, Player) and isinstance(obj_2, Asteroid):
                         obj_1.opacity = 0

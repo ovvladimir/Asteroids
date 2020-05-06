@@ -173,7 +173,7 @@ class Player(Sprite):
                 self.opacity = 255
 
     def fire(self):
-        new_bullet = Bullet(self.x, self.y, batch=self.batch, group=group_back)
+        new_bullet = Bullet(self.x, self.y, batch=self.batch, group=group_middle)
         new_bullet.rotation = self.rotation
         new_bullet.velocity_x, new_bullet.velocity_y = motion(
             new_bullet.rotation, self.bullet_speed)

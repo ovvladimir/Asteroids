@@ -1,14 +1,16 @@
 import random
-import math
 import pyglet
 from pyglet.window import key
 
 try:
     import distance_module
+    import motion_module
     distance = distance_module.distancef
+    motion = motion_module.motionf
     nb = False
 except (ImportError, BaseException):
     from numba import njit
+    import math
     nb = True
 
 WIDTH, HEIGHT = 960, 720
@@ -116,11 +118,10 @@ class Player(Sprite):
         self.position = WIDTH // 2, HEIGHT // 2
         self.ship_radius = player_image.width // 2
         self.collide_size = (player_image.width + player_image.height) // 4
+        self.opacity = 0  # прозрачность
 
         self.engine_sprite = pyglet.sprite.Sprite(img=engine_image, *args, **kwargs)
         self.engine_sprite.visible = False
-
-        self.opacity = 0  # прозрачность
 
     def update_sprite(self, dt):
         super(Player, self).update_sprite(dt)
@@ -137,11 +138,9 @@ class Player(Sprite):
             self.ship_speed = self.ship_max_speed
         if self.ship_speed < -self.ship_max_speed:
             self.ship_speed = -self.ship_max_speed
-        angle_radians = -math.radians(self.rotation)
-        force_x = math.cos(angle_radians) * self.ship_speed * dt
-        force_y = math.sin(angle_radians) * self.ship_speed * dt
-        self.x += force_x
-        self.y += force_y
+        force_x, force_y = motion(self.rotation, self.ship_speed)
+        self.x += force_x * dt
+        self.y += force_y * dt
 
         self.engine_sprite.rotation = self.rotation
         self.engine_sprite.x = self.x
@@ -174,15 +173,10 @@ class Player(Sprite):
                 self.opacity = 255
 
     def fire(self):
-        angle_radians = -math.radians(self.rotation)
-        bullet_x = self.x + math.cos(angle_radians) * self.ship_radius
-        bullet_y = self.y + math.sin(angle_radians) * self.ship_radius
-        new_bullet = Bullet(bullet_x, bullet_y, batch=self.batch, group=group_front)
+        new_bullet = Bullet(self.x, self.y, batch=self.batch, group=group_back)
         new_bullet.rotation = self.rotation
-        bullet_vx = math.cos(math.radians(new_bullet.rotation)) * self.bullet_speed
-        bullet_vy = -math.sin(math.radians(new_bullet.rotation)) * self.bullet_speed
-        new_bullet.velocity_x = bullet_vx
-        new_bullet.velocity_y = bullet_vy
+        new_bullet.velocity_x, new_bullet.velocity_y = motion(
+            new_bullet.rotation, self.bullet_speed)
         game_objects.append(new_bullet)
         bullet_list.append(new_bullet)
         laser.play()
@@ -254,6 +248,13 @@ if nb:
     def distance(x1, y1, x2, y2):
         """возвращает расстояние между двумя точками"""
         return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+    @njit('(float64, int64)')
+    def motion(rt, sh):
+        angle_radians = -math.radians(rt)
+        fx = math.cos(angle_radians) * sh
+        fy = math.sin(angle_radians) * sh
+        return fx, fy
 
 
 def update(dt):

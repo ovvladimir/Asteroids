@@ -30,7 +30,6 @@ paused = [False, True]
 game_run = [True]
 score = [0]
 asteroid_list = []
-bullet_list = []
 player_icons = []
 game_objects = []
 background = []
@@ -142,11 +141,10 @@ class Player(Sprite):
         self.y += force_y * dt
 
         self.engine_sprite.rotation = self.rotation
-        self.engine_sprite.x = self.x
-        self.engine_sprite.y = self.y
+        self.engine_sprite.position = self.position
 
         if self.opacity == 255:
-            if keys['Fire'] and len(bullet_list) == 0:
+            if keys['Fire'] and bullet.position == bullet.pos:
                 self.fire()
             if keys['Left']:
                 self.rotation -= self.rotate_speed * dt
@@ -172,12 +170,10 @@ class Player(Sprite):
                 self.opacity = 255
 
     def fire(self):
-        new_bullet = Bullet(self.x, self.y, batch=self.batch, group=group_middle)
-        new_bullet.rotation = self.rotation
-        new_bullet.velocity_x, new_bullet.velocity_y = direction(
-            new_bullet.rotation, self.bullet_speed)
-        game_objects.append(new_bullet)
-        bullet_list.append(new_bullet)
+        bullet.position = self.position
+        bullet.rotation = self.rotation
+        bullet.velocity_x, bullet.velocity_y = direction(bullet.rotation, self.bullet_speed)
+        game_objects.append(bullet)
         laser.play()
 
 
@@ -186,14 +182,16 @@ class Bullet(Sprite):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
         # self.scale = 0.7
         self.collide_size = bullet_image.height * 0.5
+        self.pos = -WIDTH, -HEIGHT
+        self.position = self.pos
 
     def update_sprite(self, dt):
         super(Bullet, self).update_sprite(dt)
 
         if self.x < 0 or self.x > WIDTH or self.y < 0 or self.y > HEIGHT:
-            self.delete()  # удаление из видеопамяти
-            bullet_list.remove(self)
             game_objects.remove(self)
+            self.velocity_x, self.velocity_y = 0, 0
+            self.position = self.pos
 
 
 class Asteroid(Sprite):
@@ -216,8 +214,8 @@ class Asteroid(Sprite):
                     new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.5
                     game_objects.append(new_asteroid)
                     asteroid_list.append(new_asteroid)
-            other_object.delete()
-            bullet_list.remove(other_object)
+            other_object.velocity_x, other_object.velocity_y = 0, 0
+            other_object.position = other_object.pos
             game_objects.remove(other_object)
             self.delete()
             asteroid_list.remove(self)
@@ -366,12 +364,9 @@ def init():
     score_label.color = (255, 255, 255, 255)
     for al in asteroid_list:
         al.delete()
-    for bl in bullet_list:
-        bl.delete()
     for il in player_icons:
         il.delete()
     asteroid_list.clear()
-    bullet_list.clear()
     player_icons.clear()
     game_objects.clear()
     game_objects.append(player_ship)
@@ -379,6 +374,8 @@ def init():
     player_ship.ship_speed = 0
     player_ship.rotation = 0
     player_ship.position = WIDTH // 2, HEIGHT // 2
+    bullet.velocity_x, bullet.velocity_y = 0, 0
+    bullet.position = bullet.pos
     for i in range(NUMBER_OF_LIVES):
         player_icons.append(pyglet.sprite.Sprite(
             player_image, x=WIDTH - player_image.width // 4 - i * 30,
@@ -390,5 +387,6 @@ def init():
 
 if __name__ == '__main__':
     player_ship = Player(batch=main_batch, group=group_front)
+    bullet = Bullet(batch=main_batch, group=group_middle)
     init()
     pyglet.app.run()

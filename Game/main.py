@@ -209,13 +209,13 @@ class Asteroid(Sprite):
             score[0] += 1
             score_label.text = f"Score: {score[0]}"
             sound.play()
-            if self.scale > 0.3:
+            if self.scale > 0.33:
                 for _ in range(NUMBER_OF_NEW_ASTEROIDS):
                     new_asteroid = Asteroid(x=self.x, y=self.y, batch=self.batch, group=self.group)
                     new_asteroid.velocity_x = random.randint(-120, 120) + self.velocity_x
                     new_asteroid.velocity_y = random.randint(-120, 120) + self.velocity_y
-                    new_asteroid.scale = self.scale * 0.5
-                    new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.5
+                    new_asteroid.scale = self.scale * 0.55
+                    new_asteroid.collide_size = self.image.width * new_asteroid.scale * 0.55
                     game_objects.append(new_asteroid)
                     asteroid_list.append(new_asteroid)
             other_object.velocity_x, other_object.velocity_y = 0, 0

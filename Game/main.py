@@ -47,6 +47,7 @@ player_image = pyglet.resource.image("ship2.png")
 bullet_image = pyglet.resource.image("laser.png")
 engine_image = pyglet.resource.image("smoke.png")
 asteroid_image = pyglet.resource.image("asteroid.png")
+meteor_image = pyglet.resource.image("meteor.png")
 bg_image = pyglet.resource.image("star_field.jpg")
 bg_image.width, bg_image.height = WIDTH + 2, HEIGHT + 2
 for b in range(2):
@@ -76,8 +77,10 @@ sound = pyglet.resource.media('explosion.wav', streaming=False)
 
 player_image.anchor_x, player_image.anchor_y = player_image.width // 2, player_image.height // 2
 asteroid_image.anchor_x, asteroid_image.anchor_y = asteroid_image.width // 2, asteroid_image.height // 2
+meteor_image.anchor_x, meteor_image.anchor_y = meteor_image.width // 2, meteor_image.height // 2
 bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width // 2, bullet_image.height // 2
 engine_image.anchor_x, engine_image.anchor_y = engine_image.width * 1.5, engine_image.height * 0.5
+asteroid_meteor_images = [asteroid_image, meteor_image]
 
 
 class Sprite(pyglet.sprite.Sprite):
@@ -196,7 +199,8 @@ class Bullet(Sprite):
 
 class Asteroid(Sprite):
     def __init__(self, *args, **kwargs):
-        super(Asteroid, self).__init__(asteroid_image, *args, **kwargs)
+        super(Asteroid, self).__init__(
+            random.choice(asteroid_meteor_images), *args, **kwargs)
         self.rotate_speed = random.randint(-50, 50)
 
     def handle_collision_with(self, other_object):

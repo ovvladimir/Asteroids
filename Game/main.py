@@ -79,7 +79,7 @@ player_image.anchor_x, player_image.anchor_y = player_image.width // 2, player_i
 asteroid_image.anchor_x, asteroid_image.anchor_y = asteroid_image.width // 2, asteroid_image.height // 2
 meteor_image.anchor_x, meteor_image.anchor_y = meteor_image.width // 2, meteor_image.height // 2
 bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width // 2, bullet_image.height // 2
-engine_image.anchor_x, engine_image.anchor_y = engine_image.width * 1.5, engine_image.height * 0.5
+engine_image.anchor_x, engine_image.anchor_y = int(engine_image.width / 0.7), engine_image.height // 2
 asteroid_meteor_images = [asteroid_image, meteor_image]
 
 
@@ -184,7 +184,7 @@ class Bullet(Sprite):
     def __init__(self, *args, **kwargs):
         super(Bullet, self).__init__(bullet_image, *args, **kwargs)
         # self.scale = 0.7
-        self.collide_size = bullet_image.height * 0.5
+        self.collide_size = bullet_image.height // 2
         self.pos = -WIDTH, -HEIGHT
         self.position = self.pos
 
@@ -240,7 +240,7 @@ def init_asteroids(batch=None, group=None):
         new_asteroid.rotation = random.randrange(360)
         new_asteroid.velocity_x = random.randint(-50, 50)
         new_asteroid.velocity_y = random.randint(-50, 50)
-        new_asteroid.collide_size = asteroid_image.width * 0.5
+        new_asteroid.collide_size = asteroid_image.width // 2
         game_objects.append(new_asteroid)
         asteroid_list.append(new_asteroid)
 

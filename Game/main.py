@@ -1,6 +1,7 @@
 import random
 import pyglet
 from pyglet.window import key
+import os
 
 try:
     import bytecode_module
@@ -19,7 +20,8 @@ game_window.set_location(5, 30)
 game_window.set_mouse_visible(visible=False)
 counter = pyglet.window.FPSDisplay(window=game_window)
 
-pyglet.resource.path = ["../res"]
+maindir = os.path.dirname(os.path.dirname(__file__))
+pyglet.resource.path = [os.path.join(maindir, 'res')]
 pyglet.resource.reindex()
 
 icon = pyglet.resource.image("ship.png")

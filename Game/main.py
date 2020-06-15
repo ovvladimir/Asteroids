@@ -3,16 +3,6 @@ import pyglet
 from pyglet.window import key
 import os
 
-try:
-    import bytecode_module
-    distance = bytecode_module.distance
-    direction = bytecode_module.direction
-    nb = False
-except (ImportError, BaseException):
-    from numba import njit
-    import math
-    nb = True
-
 WIDTH, HEIGHT = 960, 720
 
 game_window = pyglet.window.Window(WIDTH, HEIGHT, caption='Asteroids')
@@ -83,6 +73,31 @@ meteor_image.anchor_x, meteor_image.anchor_y = meteor_image.width // 2, meteor_i
 bullet_image.anchor_x, bullet_image.anchor_y = bullet_image.width // 2, bullet_image.height // 2
 engine_image.anchor_x, engine_image.anchor_y = int(engine_image.width / 0.7), engine_image.height // 2
 asteroid_meteor_images = [asteroid_image, meteor_image]
+
+'-------------------------------------------------------'
+try:
+    import bytecode_module
+    distance = bytecode_module.distance
+    direction = bytecode_module.direction
+    nb = False
+except (ImportError, BaseException):
+    from numba import njit
+    import math
+    nb = True
+
+if nb:
+    @njit('float64(float64, float64, float64, float64)')
+    def distance(x1, y1, x2, y2):
+        """возвращает расстояние между двумя точками"""
+        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+    @njit('(float64, int64)')
+    def direction(rt, sh):
+        angle_radians = -math.radians(rt)
+        fx = math.cos(angle_radians) * sh
+        fy = math.sin(angle_radians) * sh
+        return fx, fy
+'-------------------------------------------------------'
 
 
 class Sprite(pyglet.sprite.Sprite):
@@ -247,20 +262,6 @@ def init_asteroids(batch=None, group=None):
         asteroid_list.append(new_asteroid)
 
 
-if nb:
-    @njit('float64(float64, float64, float64, float64)')
-    def distance(x1, y1, x2, y2):
-        """возвращает расстояние между двумя точками"""
-        return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-
-    @njit('(float64, int64)')
-    def direction(rt, sh):
-        angle_radians = -math.radians(rt)
-        fx = math.cos(angle_radians) * sh
-        fy = math.sin(angle_radians) * sh
-        return fx, fy
-
-
 def update(dt):
 
     for bg in background:
@@ -355,6 +356,12 @@ def on_key_release(symbol, modifiers):
         keys['Fire'] = False
     if modifiers & key.MOD_CTRL:
         pass
+
+
+@game_window.event
+def on_close():
+    player_ship.delete()
+    print('[EXIT]')
 
 
 def text(_):

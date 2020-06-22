@@ -3,6 +3,16 @@ import pyglet
 from pyglet.window import key
 import os
 
+try:
+    import bytecode_module
+    distance = bytecode_module.distance
+    direction = bytecode_module.direction
+    nb = False
+except (ImportError, BaseException):
+    from numba import njit
+    import math
+    nb = True
+
 WIDTH, HEIGHT = 960, 720
 
 game_window = pyglet.window.Window(WIDTH, HEIGHT, caption='Asteroids')
@@ -75,16 +85,6 @@ engine_image.anchor_x, engine_image.anchor_y = int(engine_image.width / 0.7), en
 asteroid_meteor_images = [asteroid_image, meteor_image]
 
 '-------------------------------------------------------'
-try:
-    import bytecode_module
-    distance = bytecode_module.distance
-    direction = bytecode_module.direction
-    nb = False
-except (ImportError, BaseException):
-    from numba import njit
-    import math
-    nb = True
-
 if nb:
     @njit('float64(float64, float64, float64, float64)')
     def distance(x1, y1, x2, y2):
